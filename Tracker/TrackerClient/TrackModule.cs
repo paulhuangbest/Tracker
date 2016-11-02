@@ -51,7 +51,7 @@ namespace TrackerClient
             HttpResponse response = context.Response;
 
             //response.Write("这是来自自定义HttpModule中有EndRequest");
-            TrackLog["end"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            TrackLog["end"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
 
             Client.SystemLog(TrackLog);
 
