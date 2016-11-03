@@ -1,6 +1,9 @@
-﻿using System;
+﻿using RabbitMQ.Client;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 
@@ -16,10 +19,31 @@ namespace Receiver.Controllers
         }
 
         //
-        // GET: /ReceiveHub/Details/5
-        public ActionResult Details(int id)
+        
+        public void Push()
         {
-            return View();
+            Task.Factory.StartNew(() =>
+            {
+                //while (true)
+                {
+                    var factory = new ConnectionFactory() { HostName = "localhost" };
+                    using (var connection = factory.CreateConnection())
+                    using (var channel = connection.CreateModel())
+                    {
+                        channel.ExchangeDeclare(exchange: "direct_logs",
+                                                type: "direct");
+
+                        var severity = "info";
+                        var message = "Hello World!";
+                        var body = Encoding.UTF8.GetBytes(message);
+                        channel.BasicPublish(exchange: "direct_logs",
+                                             routingKey: severity,
+                                             basicProperties: null,
+                                             body: body);
+
+                    }
+                }
+            });
         }
 
         //
@@ -34,6 +58,9 @@ namespace Receiver.Controllers
         [HttpPost]
         public ActionResult Data(FormCollection collection)
         {
+            
+            
+
             return new ContentResult() { Content = "success" };
         }
 
