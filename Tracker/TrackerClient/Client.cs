@@ -98,7 +98,7 @@ namespace TrackerClient
 
         private static void Post(Dictionary<string, string> postData)
         {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create("http://localhost:48258/ReceiveHub/data");
+            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create("http://localhost:48258/Hub/PushData");
             request.Method = "post";
             request.ContentType = "application/x-www-form-urlencoded";
 

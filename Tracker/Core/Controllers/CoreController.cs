@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using Entity;
 
 namespace Core.Controllers
 {
@@ -20,7 +21,7 @@ namespace Core.Controllers
         }
 
         
-        public void GetQueueData()
+        public void Join()
         {
             Task.Factory.StartNew(() =>
             {
@@ -31,7 +32,7 @@ namespace Core.Controllers
                     {
                         channel.ExchangeDeclare(exchange: "direct_logs",
                                                 type: "direct");
-                        var queueName = channel.QueueDeclare().QueueName;
+                        var queueName = channel.QueueDeclare("q_system", true, false, false, null);
 
 
 
@@ -73,10 +74,127 @@ namespace Core.Controllers
             
         }
 
-        // GET: Core/Create
-        public ActionResult Create()
+        public void Split()
         {
-            return View();
+            string[] types = Enum.GetNames(typeof(LogType));
+
+            
+            
+
+            foreach (string type in types)
+            {
+                Task t = Task.Factory.StartNew(() =>
+                {
+                    string queue = "", severity = "";
+
+                    switch (type)
+                    {
+                        case "ExceptionLog":
+                            queue = "q_exception";
+                            severity = "exception";
+                            break;
+
+                        case "OperateLog":
+                            queue = "q_operate";
+                            severity = "operate";
+                            break;
+
+                        case "SystemLog":
+                            queue = "q_system";
+                            severity = "system";
+                            break;
+
+                        case "Normal":
+                            queue = "q_normal";
+                            severity = "normal";
+                            break;
+                    }
+
+
+
+                    var factory = new ConnectionFactory() { HostName = "localhost" };
+                    using (var connection = factory.CreateConnection())
+                    using (var channel = connection.CreateModel())
+                    {
+                        channel.ExchangeDeclare(exchange: "direct_logs",
+                                                type: "direct");
+                        var queueName = channel.QueueDeclare(queue, true, false, false, null);
+
+
+
+                        //foreach (var severity in args)
+                        {
+                            channel.QueueBind(queue: queueName,
+                                              exchange: "direct_logs",
+                                              routingKey: severity);
+                        }
+
+
+
+                        var consumer = new EventingBasicConsumer(channel);
+
+
+                        switch (type)
+                        {
+                            case "ExceptionLog":
+                                //EventHandler<BasicDeliverEventArgs> handler = new EventHandler<BasicDeliverEventArgs>(test);
+                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(test);
+                                break;
+
+                            default:
+
+                                consumer.Received += (model, ea) =>
+                                {
+                                    var body = ea.Body;
+                                    var message = Encoding.UTF8.GetString(body);
+                                    var routingKey = ea.RoutingKey;
+
+                                };
+                                break;
+                        }
+                        
+
+                        
+
+                        channel.BasicConsume(queue: queueName,
+                                             noAck: true,
+                                             consumer: consumer);
+
+                        while (true)
+                        {
+
+
+                            Thread.Sleep(5000);
+                        }
+
+
+
+                    }
+
+                });
+
+
+            }
+            
+
+            
+        }
+
+        private void test(object send, BasicDeliverEventArgs ea)
+        {
+            var body = ea.Body;
+            var message = Encoding.UTF8.GetString(body);
+            var routingKey = ea.RoutingKey;
+        }
+        public void remove (string queuename)
+        {
+            var factory = new ConnectionFactory() { HostName = "localhost" };
+                    using (var connection = factory.CreateConnection())
+                    using (var channel = connection.CreateModel())
+                    {
+                        channel.QueueDelete("q_system", true, true);
+                    }
+
         }
 
         // POST: Core/Create
