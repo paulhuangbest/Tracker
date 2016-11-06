@@ -35,10 +35,10 @@ namespace TrackerClient
 
             //HttpResponse response = context.Response;
 
-            TrackLog["url"] = context.Request.RawUrl;
+            TrackLog["url"] = context.Request.Url.OriginalString;
             TrackLog["method"] = context.Request.HttpMethod;
             TrackLog["begin"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
-
+            
         }
 
         public void Application_EndRequest(object sender, EventArgs e)
@@ -52,6 +52,12 @@ namespace TrackerClient
 
             //response.Write("这是来自自定义HttpModule中有EndRequest");
             TrackLog["end"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
+
+            DateTime begin = DateTime.ParseExact(TrackLog["begin"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
+            DateTime end = DateTime.ParseExact(TrackLog["end"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
+
+            TimeSpan ts = (TimeSpan)(end - begin);
+            TrackLog["interval"] = ts.TotalMilliseconds.ToString();
 
             Client.SystemLog(TrackLog);
 

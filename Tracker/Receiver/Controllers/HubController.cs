@@ -7,11 +7,33 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using Newtonsoft.Json;
+using Entity;
 
 namespace Receiver.Controllers
 {
     public class HubController : Controller
     {
+
+        public List<HubUrl> InUrl
+        {
+            get {
+                if (ControllerContext.HttpContext.Application["InUrl"] == null)
+                    ControllerContext.HttpContext.Application["InUrl"] = new List<HubUrl>();
+
+                
+                List<HubUrl> list = ControllerContext.HttpContext.Application["InUrl"] as List<HubUrl>;
+
+                if (list.Count > 5)
+                    list.RemoveAt(0);
+
+                return list;
+            }
+            set {
+                ControllerContext.HttpContext.Application["InUrl"] = value;
+            }
+
+        }
+        
         //
         // GET: /ReceiveHub/
         public ActionResult Index()
@@ -48,9 +70,9 @@ namespace Receiver.Controllers
 
         //
         // GET: /ReceiveHub/Create
-        public ActionResult Create()
+        public ActionResult Monitor()
         {
-            return View();
+            return View(InUrl);
         }
 
         //
@@ -58,32 +80,48 @@ namespace Receiver.Controllers
         [HttpPost]
         public ActionResult PushData(FormCollection collection)
         {
+            HubUrl url = new HubUrl();
+
+            url.InDate = DateTime.Now;
+
             Dictionary<string, string> dic = new Dictionary<string, string>();
+
+            
 
             foreach (string key in collection.AllKeys)
             {
-                dic[key] = collection[key];
+                dic[key] = HttpUtility.HtmlDecode(collection[key]);
 
             }
+            
+            dic["status"] = LogStatus.Hub.ToString("D");
+
+            url.ProjectKey = dic["key"];
+            url.Status = dic["status"];
+            url.Url = dic["url"];
+            
 
             string message = JsonConvert.SerializeObject(dic);
-            string severity = "";
+            url.Body = message;
 
-            switch (dic["type"])
+            string severity = "";
+            LogType type = (LogType)Enum.Parse(typeof(LogType), dic["type"]);
+
+            switch (type)
             {
-                case "ExceptionLog":
+                case LogType.ExceptionLog:
                     severity = "exception";
                     break;
 
-                case "OperateLog":
+                case LogType.OperateLog:
                     severity = "operate";
                     break;
 
-                case "SystemLog":
+                case LogType.SystemLog:
                     severity = "system";
                     break;
 
-                case "Normal":
+                case LogType.Normal:
                     severity = "normal";
                     break;
             }
@@ -102,7 +140,17 @@ namespace Receiver.Controllers
                                      basicProperties: null,
                                      body: body);
 
+                
+
             }
+
+            url.Type = type.ToString();
+            url.MQ = severity;
+            url.OutDate = DateTime.Now;
+
+            InUrl.Add(url);
+
+            
 
             return new ContentResult() { Content = "success" };
         }

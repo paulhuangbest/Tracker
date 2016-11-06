@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using System.Web;
 using System.Net;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,6 +16,8 @@ namespace TrackerClient
 
         public static void ExceptionLog(Exception ex)
         {
+            string url = HttpContext.Current.Request.Url.OriginalString;
+
             Task.Factory.StartNew(() => {
                 //projectkey from web.config
                 //log type 
@@ -24,14 +26,13 @@ namespace TrackerClient
                 //exception message
 
 
-               
-
                 Dictionary<string, string> dic = new Dictionary<string, string>();
                 dic["key"] = ProjectKey;
                 dic["type"] = LogType.ExceptionLog.ToString("D");
                 dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 dic["status"] = LogStatus.Send.ToString("D");
                 dic["msg"] = GetExceptionMessage(ex);
+                dic["url"] = url;
 
 
                 Post(dic);    
@@ -45,18 +46,19 @@ namespace TrackerClient
 
         public static void OperateLog(string trackUser , string action ,string flowName)
         {
-
+            string url = HttpContext.Current.Request.Url.OriginalString;
             Task.Factory.StartNew(() =>
             {
 
                 Dictionary<string, string> dic = new Dictionary<string, string>();
                 dic["key"] = ProjectKey;
                 dic["type"] = LogType.OperateLog.ToString("D");
-                dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
                 dic["status"] = LogStatus.Send.ToString("D");
                 dic["user"] = trackUser;
                 dic["action"] = action;
                 dic["flow"] = flowName;
+                dic["url"] = url;
 
 
                 System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace();
@@ -87,7 +89,7 @@ namespace TrackerClient
             Task.Factory.StartNew(() =>
             {
                 dic["key"] = ProjectKey;
-                dic["type"] = LogType.OperateLog.ToString("D");
+                dic["type"] = LogType.SystemLog.ToString("D");
                 dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 dic["status"] = LogStatus.Send.ToString("D");
 
@@ -105,9 +107,12 @@ namespace TrackerClient
             string body = "";
             foreach (KeyValuePair<string, string> item in postData)
             {
-                body += item.Key + "=" + System.Web.HttpUtility.HtmlEncode(item.Value) + "&";
+                body += item.Key + "=" + System.Web.HttpUtility.UrlEncode( System.Web.HttpUtility.HtmlEncode(item.Value)) + "&";
             }
 
+            body = body.Trim('&');
+            //body = System.Web.HttpUtility.UrlEncode(body);
+            
             //body = System.Web.HttpUtility.HtmlEncode(body);
 
             byte[] data = System.Text.Encoding.UTF8.GetBytes(body);
@@ -140,18 +145,4 @@ namespace TrackerClient
     }
 
 
-
-    public enum LogType
-    {
-        ExceptionLog = 1,       
-        OperateLog = 2,
-        SystemLog = 3,
-        Normal = 4
-    }
-
-    public enum LogStatus
-    {
-        Send = 1,
-        Receive = 2
-    }
 }

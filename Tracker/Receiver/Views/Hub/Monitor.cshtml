@@ -1,0 +1,44 @@
+﻿@using Entity;
+@{
+    Layout = null;
+}
+@model List<HubUrl>
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    <div>
+        <table style="border:solid 1px red" border="1" cellpadding="5" cellspacing="0" width="100%">
+            <tr>
+                <td>项目</td>
+                <td>类型</td>
+                <td>URL</td>
+                <td>状态</td>
+                <td>传入时间</td>
+                <td>传出时间</td>
+                <td>队列</td>
+                <td>内容</td>
+            </tr>
+            @foreach (HubUrl url in Model)
+            {
+                <tr>
+                    <td>@url.ProjectKey</td>
+                    <td>@url.Type</td>
+                    <td>@url.Url</td>
+                    <td>@url.Status</td>
+                    <td>@url.InDate.ToString("yyyy-MM-dd HH:mm:ss:fff")</td>
+                    <td>@url.OutDate.ToString("yyyy-MM-dd HH:mm:ss:fff")</td>
+                    <td>@url.MQ</td>
+                    <td>@url.Body</td>
+                </tr>
+            }
+        </table>
+        
+    </div>
+</body>
+</html>
