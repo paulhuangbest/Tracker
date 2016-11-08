@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using Entity;
+using Couchbase;
+using Newtonsoft.Json;
 
 namespace Core.Controllers
 {
@@ -74,13 +76,14 @@ namespace Core.Controllers
             
         }
 
+        private static readonly Cluster Cluster = new Cluster("couchbaseClients/couchbase");
+
         public void Split()
         {
+
             string[] types = Enum.GetNames(typeof(LogType));
 
             
-            
-
             foreach (string type in types)
             {
                 Task t = Task.Factory.StartNew(() =>
@@ -137,8 +140,19 @@ namespace Core.Controllers
                         switch (type)
                         {
                             case "ExceptionLog":
-                                //EventHandler<BasicDeliverEventArgs> handler = new EventHandler<BasicDeliverEventArgs>(test);
-                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(test);
+                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveException);
+                                break;
+
+                            case "OperateLog":
+                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveOperate);
+                                break;
+
+                            case "SystemLog":
+                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveSystem);
+                                break;
+
+                            case "Normal":
+                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveNormal);
                                 break;
 
                             default:
@@ -149,11 +163,23 @@ namespace Core.Controllers
                                     var message = Encoding.UTF8.GetString(body);
                                     var routingKey = ea.RoutingKey;
 
+                                    using (var bucket = Cluster.OpenBucket())
+                                    {
+                                        var document = new Document<dynamic>() {
+                                            Id = "Hello",
+                                            Content = new
+                                            {
+                                                name = message
+                                            }
+                                        };
+
+                                        var upsert = bucket.Upsert(document);
+                                    }
+
+                                    
                                 };
                                 break;
                         }
-                        
-
                         
 
                         channel.BasicConsume(queue: queueName,
@@ -180,11 +206,167 @@ namespace Core.Controllers
             
         }
 
-        private void test(object send, BasicDeliverEventArgs ea)
+        private void ResolveNormal(object send, BasicDeliverEventArgs ea)
+        { }
+
+        private void ResolveOperate(object send, BasicDeliverEventArgs ea)
         {
-            var body = ea.Body;
-            var message = Encoding.UTF8.GetString(body);
-            var routingKey = ea.RoutingKey;
+            try
+            {
+                var body = ea.Body;
+                var message = Encoding.UTF8.GetString(body);
+                var routingKey = ea.RoutingKey;
+
+                Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
+
+                List<string> stack = new List<string>();
+
+                for (int i = 0; i < 10; i++)
+                {
+                    if (dic.Keys.Contains("stack" + i))
+                    {
+                        stack.Add(dic["stack" + i]);
+                    }
+                    else
+                        break;
+                    
+                }
+
+                using (var bucket = Cluster.OpenBucket("default"))
+                {
+                    string key = "wms_operate_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+
+                    var document = new Document<OperateLog>()
+                    {
+                        Id = key,
+                        Content = new OperateLog
+                        {
+                            LogId = key,
+                            ProjectKey = dic["key"],
+                            Type = dic["type"],
+                            Status = dic["status"],
+                            CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
+                            Url = dic["url"],
+                            User = dic["user"],
+                            Action = dic["action"],
+                            Flow = dic["flow"],
+                            Stack = stack,
+                            IP = dic["ip"]
+                        }
+                    };
+
+                    var upsert = bucket.Upsert(document);
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+
+        private void ResolveSystem(object send, BasicDeliverEventArgs ea)
+        {                       
+
+            try
+            {
+                var body = ea.Body;
+                var message = Encoding.UTF8.GetString(body);
+                var routingKey = ea.RoutingKey;
+
+                Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
+
+
+                DateTime begin = DateTime.ParseExact(dic["begin"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
+                DateTime end = DateTime.ParseExact(dic["end"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
+                TimeSpan ts = (TimeSpan)(end - begin);
+
+                List<string> argument = null;
+
+                if (!string.IsNullOrEmpty(dic["post"]))
+                {
+                    string post = HttpUtility.HtmlDecode(dic["post"]);
+
+                    argument = post.Split('&').ToList();
+                    
+                }
+
+                using (var bucket = Cluster.OpenBucket("default"))
+                {
+                    string key = "wms_system_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+
+                    var document = new Document<SystemLog>()
+                    {
+                        Id = key,
+                        Content = new SystemLog
+                        {
+                            LogId = key,
+                            ProjectKey = dic["key"],
+                            Type = dic["type"],
+                            Status = dic["status"],
+                            CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
+                            Url = dic["url"],
+                            Interval = ts.TotalMilliseconds.ToString(),
+                            BeginTime = begin,
+                            EndTime = end,
+                            QueryString = dic["query"],
+                            PostArgument = argument,
+                            IP = dic["ip"]
+                        }
+                    };
+
+                    var upsert = bucket.Upsert(document);
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private void ResolveException(object send, BasicDeliverEventArgs ea)
+        {
+            try
+            {
+                var body = ea.Body;
+                var message = Encoding.UTF8.GetString(body);
+                var routingKey = ea.RoutingKey;
+
+                Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
+
+                using (var bucket = Cluster.OpenBucket("default"))
+                {
+                    string key = "wms_exception_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+
+                    var document = new Document<ExceptionLog>()
+                    {
+                        Id = key,
+                        Content = new ExceptionLog
+                        {
+                            LogId = key,
+                            ProjectKey = dic["key"],
+                            Type = dic["type"],
+                            Status = dic["status"],
+                            CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
+                            Url = dic["url"],
+                            ExceptionMessage = dic["msg"],
+                            IP = dic["ip"]
+                        }
+                    };
+
+                    var upsert = bucket.Upsert(document);
+
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+
+            
+            
         }
         public void remove (string queuename)
         {

@@ -18,6 +18,15 @@ namespace TrackerClient
         {
             string url = HttpContext.Current.Request.Url.OriginalString;
 
+            string userHostAddress = HttpContext.Current.Request.UserHostAddress;
+
+            if (string.IsNullOrEmpty(userHostAddress))
+            {
+                userHostAddress = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
+            }
+
+            
+
             Task.Factory.StartNew(() => {
                 //projectkey from web.config
                 //log type 
@@ -29,11 +38,11 @@ namespace TrackerClient
                 Dictionary<string, string> dic = new Dictionary<string, string>();
                 dic["key"] = ProjectKey;
                 dic["type"] = LogType.ExceptionLog.ToString("D");
-                dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
                 dic["status"] = LogStatus.Send.ToString("D");
                 dic["msg"] = GetExceptionMessage(ex);
                 dic["url"] = url;
-
+                dic["ip"] = userHostAddress;
 
                 Post(dic);    
 
@@ -44,9 +53,41 @@ namespace TrackerClient
 
         
 
-        public static void OperateLog(string trackUser , string action ,string flowName)
+        public static void OperateLog(string trackUser , string action ,string flowName="")
         {
             string url = HttpContext.Current.Request.Url.OriginalString;
+
+            string userHostAddress = HttpContext.Current.Request.UserHostAddress;
+
+            if (string.IsNullOrEmpty(userHostAddress))
+            {
+                userHostAddress = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
+            }
+
+            System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace();
+            System.Diagnostics.StackFrame[] sfs = st.GetFrames();
+
+            Dictionary<string, string> dic2 = new Dictionary<string, string>();
+            for (int u = 0; u < sfs.Length; u++)
+            {
+                System.Reflection.MethodBase mb = sfs[u].GetMethod();
+
+                //if (mb.Name.IndexOf("OperateLog") >= 0)
+                //{
+                //    continue;
+                //}
+
+                if (mb.DeclaringType.FullName.IndexOf("System") < 0)
+                {
+                    dic2["stack" + u] = string.Format("{0}.{1}", mb.DeclaringType.FullName, mb.Name);
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+
             Task.Factory.StartNew(() =>
             {
 
@@ -59,23 +100,11 @@ namespace TrackerClient
                 dic["action"] = action;
                 dic["flow"] = flowName;
                 dic["url"] = url;
+                dic["ip"] = userHostAddress;
 
-
-                System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace();
-                System.Diagnostics.StackFrame[] sfs = st.GetFrames();
-                for (int u = 0; u < sfs.Length; u++)
+                foreach (KeyValuePair<string, string> item in dic2)
                 {
-                    System.Reflection.MethodBase mb = sfs[u].GetMethod();
-
-                    if (mb.DeclaringType.FullName.IndexOf("System") < 0)
-                    {
-                        dic["stack" + u] = string.Format("{0}.{1}", mb.DeclaringType.FullName, mb.Name);
-                    }
-                    else
-                    {
-                        break;
-                    }
-
+                    dic[item.Key] = item.Value;
                 }
 
                 Post(dic);
@@ -90,7 +119,7 @@ namespace TrackerClient
             {
                 dic["key"] = ProjectKey;
                 dic["type"] = LogType.SystemLog.ToString("D");
-                dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
                 dic["status"] = LogStatus.Send.ToString("D");
 
                 Post(dic);

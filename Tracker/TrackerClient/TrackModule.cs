@@ -38,7 +38,27 @@ namespace TrackerClient
             TrackLog["url"] = context.Request.Url.OriginalString;
             TrackLog["method"] = context.Request.HttpMethod;
             TrackLog["begin"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
-            
+            TrackLog["query"] = context.Request.Url.Query;
+
+            string post = "";
+            foreach (string key in context.Request.Form.Keys)
+            {
+                if (key.IndexOf("__VIEWSTATE") <0 && key.IndexOf("__EVENT") <0)
+                    post += key +"="+ context.Request.Form[key] + "&";
+            }
+
+            post = post.Trim('&');
+
+            TrackLog["post"] = post;
+
+            string userHostAddress = HttpContext.Current.Request.UserHostAddress;
+
+            if (string.IsNullOrEmpty(userHostAddress))
+            {
+                userHostAddress = context.Request.ServerVariables["REMOTE_ADDR"];
+            }
+
+            TrackLog["ip"] = userHostAddress;
         }
 
         public void Application_EndRequest(object sender, EventArgs e)
@@ -53,11 +73,7 @@ namespace TrackerClient
             //response.Write("这是来自自定义HttpModule中有EndRequest");
             TrackLog["end"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
 
-            DateTime begin = DateTime.ParseExact(TrackLog["begin"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
-            DateTime end = DateTime.ParseExact(TrackLog["end"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
-
-            TimeSpan ts = (TimeSpan)(end - begin);
-            TrackLog["interval"] = ts.TotalMilliseconds.ToString();
+            
 
             Client.SystemLog(TrackLog);
 
