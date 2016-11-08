@@ -15,7 +15,9 @@ namespace Entity
 
         public string Interval { get; set; }
         public string QueryString { get; set; }
-
+        public string StatusCode { get; set; }
+        
         public List<string> PostArgument { get; set; }
+        public List<string> Cookies { get; set; }
     }
 }

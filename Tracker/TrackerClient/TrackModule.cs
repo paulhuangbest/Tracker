@@ -59,6 +59,16 @@ namespace TrackerClient
             }
 
             TrackLog["ip"] = userHostAddress;
+
+            string strCookies = "";
+            foreach (string key in context.Request.Cookies.Keys)
+            {
+                HttpCookie cookie = context.Request.Cookies[key];
+                strCookies += cookie.Name + "=" + cookie.Value + ";path=" + cookie.Path + ";expires=" + cookie.Expires + ";domain=" + cookie.Domain + ";request@@";
+            }
+
+            strCookies = strCookies.Trim('@', '@');
+            TrackLog["cookies"] = strCookies;
         }
 
         public void Application_EndRequest(object sender, EventArgs e)
@@ -73,7 +83,17 @@ namespace TrackerClient
             //response.Write("这是来自自定义HttpModule中有EndRequest");
             TrackLog["end"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
 
-            
+            string strCookies = "";
+            foreach (string key in context.Response.Cookies.Keys)
+            {
+                HttpCookie cookie = context.Response.Cookies[key];
+                strCookies += cookie.Name + "=" + cookie.Value + ";path=" + cookie.Path + ";expires=" + cookie.Expires + ";domain=" + cookie.Domain + ";response@@";
+            }
+
+            strCookies = strCookies.Trim('@', '@');
+            TrackLog["cookies"] += strCookies;
+
+            TrackLog["code"] = response.StatusCode.ToString();
 
             Client.SystemLog(TrackLog);
 
