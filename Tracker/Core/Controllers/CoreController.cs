@@ -292,6 +292,16 @@ namespace Core.Controllers
                     
                 }
 
+                List<string> cookies = null;
+
+                if (!string.IsNullOrEmpty(dic["cookies"]))
+                {
+                    string c = HttpUtility.HtmlDecode(dic["cookies"]);
+
+                    cookies = c.Split(new string[] { "@@" }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                }
+
                 using (var bucket = Cluster.OpenBucket("default"))
                 {
                     string key = "wms_system_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
@@ -312,7 +322,10 @@ namespace Core.Controllers
                             EndTime = end,
                             QueryString = dic["query"],
                             PostArgument = argument,
-                            IP = dic["ip"]
+                            IP = dic["ip"],
+                            Cookies = cookies,
+                            StatusCode = dic["code"],
+                            Method = dic["method"]
                         }
                     };
 
