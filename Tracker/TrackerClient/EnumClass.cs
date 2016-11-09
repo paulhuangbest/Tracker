@@ -23,4 +23,13 @@ namespace TrackerClient
         Hub = 2,
         Receive = 3
     }
+
+    public enum ActionType
+    {
+        Insert = 1,
+        Update = 2,
+        Delete = 3,
+        Search = 4,
+        None = 5
+    }
 }

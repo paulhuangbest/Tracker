@@ -11,7 +11,8 @@ namespace Entity
     {
         public string User { get; set; }
         public string Action { get; set; }
-        public string Flow { get; set; }
+        public string ActionType { get; set; }
+        public string Section { get; set; }
 
         public List<string> Stack { get; set; }
     }

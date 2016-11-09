@@ -11,6 +11,6 @@ namespace Entity
     {
         public string ExceptionMessage { get; set; }
 
-
+        public string User { get; set; }
     }
 }

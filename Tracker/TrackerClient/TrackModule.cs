@@ -47,6 +47,11 @@ namespace TrackerClient
                     post += key +"="+ context.Request.Form[key] + "&";
             }
 
+            foreach (string key in context.Request.Files.Keys)
+            {
+                post += key + "=" + context.Request.Files[key].FileName + "&";
+            }
+
             post = post.Trim('&');
 
             TrackLog["post"] = post;

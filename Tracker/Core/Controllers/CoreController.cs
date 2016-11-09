@@ -249,7 +249,8 @@ namespace Core.Controllers
                             Url = dic["url"],
                             User = dic["user"],
                             Action = dic["action"],
-                            Flow = dic["flow"],
+                            ActionType = dic["actionType"],
+                            Section = dic["section"],
                             Stack = stack,
                             IP = dic["ip"]
                         }
@@ -365,7 +366,8 @@ namespace Core.Controllers
                             CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
                             Url = dic["url"],
                             ExceptionMessage = dic["msg"],
-                            IP = dic["ip"]
+                            IP = dic["ip"],
+                            User = dic["user"]
                         }
                     };
 

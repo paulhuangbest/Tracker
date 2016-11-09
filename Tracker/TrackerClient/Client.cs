@@ -16,6 +16,10 @@ namespace TrackerClient
 
         public static void ExceptionLog(Exception ex)
         {
+            ExceptionLog("", ex);
+        }
+        public static void ExceptionLog(string user,Exception ex)
+        {
             string url = HttpContext.Current.Request.Url.OriginalString;
 
             string userHostAddress = HttpContext.Current.Request.UserHostAddress;
@@ -43,6 +47,7 @@ namespace TrackerClient
                 dic["msg"] = GetExceptionMessage(ex);
                 dic["url"] = url;
                 dic["ip"] = userHostAddress;
+                dic["user"] = user;
 
                 Post(dic);    
 
@@ -51,9 +56,12 @@ namespace TrackerClient
 
         }
 
-        
+        public static void OperateLog(string trackUser, string action, string section = "")
+        {
+            OperateLog(trackUser, action, ActionType.None);
+        }
 
-        public static void OperateLog(string trackUser , string action ,string flowName="")
+        public static void OperateLog(string trackUser , string action , ActionType actionType ,string section="")
         {
             string url = HttpContext.Current.Request.Url.OriginalString;
 
@@ -98,7 +106,8 @@ namespace TrackerClient
                 dic["status"] = LogStatus.Send.ToString("D");
                 dic["user"] = trackUser;
                 dic["action"] = action;
-                dic["flow"] = flowName;
+                dic["actionType"] = (actionType == ActionType.None) ? "" : actionType.ToString();
+                dic["section"] = section;
                 dic["url"] = url;
                 dic["ip"] = userHostAddress;
 

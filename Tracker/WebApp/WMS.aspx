@@ -18,6 +18,8 @@
         <hr />
         <asp:Button ID="btnException" runat="server" Text="ExceptionLog" OnClick="btnException_Click" />
             
+        <asp:FileUpload ID="FileUpload1" runat="server" />
+            
     </div>
     </form>
 </body>

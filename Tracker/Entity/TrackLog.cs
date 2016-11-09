@@ -13,6 +13,8 @@ namespace Entity
 
         public string ProjectKey { get; set; }
 
+        public string SubKey { get; set; }
+
         public string Type { get; set; }
 
         public string Status { get; set; }
@@ -22,6 +24,8 @@ namespace Entity
         public string IP { get; set; }
 
         public DateTime CreateTime { get; set; }
+
+        public string Level { get; set; }
 
         public Dictionary<string, string> Extend { get; set; }
     }
