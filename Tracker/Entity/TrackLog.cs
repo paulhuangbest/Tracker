@@ -21,7 +21,9 @@ namespace Entity
 
         public string Url { get; set; }
 
-        public string IP { get; set; }
+        public string RequestIP { get; set; }
+
+        public string ServerIP { get; set; }
 
         public DateTime CreateTime { get; set; }
 

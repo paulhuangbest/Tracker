@@ -14,11 +14,20 @@ namespace TrackerClient
 
         public static string ProjectKey { get; set; }
 
+        public static string SubKey { get; set; }
+
+
         public static void ExceptionLog(Exception ex)
         {
-            ExceptionLog("", ex);
+            ExceptionLog("", ex, null);
         }
+
         public static void ExceptionLog(string user,Exception ex)
+        {
+            ExceptionLog(user, ex, null);
+        }
+
+        public static void ExceptionLog(string user,Exception ex,Dictionary<string,string> extend)
         {
             string url = HttpContext.Current.Request.Url.OriginalString;
 
@@ -32,22 +41,36 @@ namespace TrackerClient
             
 
             Task.Factory.StartNew(() => {
-                //projectkey from web.config
-                //log type 
-                //create time
-                //status
-                //exception message
 
+                string name = Dns.GetHostName();
+                IPHostEntry me = Dns.GetHostEntry(name);
+                string serverIp = "";
+                foreach (IPAddress ip in me.AddressList)
+                {
+                    if (!ip.IsIPv6LinkLocal)
+                        serverIp += ip.ToString() + "&";
+                }
+                serverIp = serverIp.Trim('&');
 
                 Dictionary<string, string> dic = new Dictionary<string, string>();
                 dic["key"] = ProjectKey;
+                dic["subkey"] = SubKey;
                 dic["type"] = LogType.ExceptionLog.ToString("D");
                 dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
                 dic["status"] = LogStatus.Send.ToString("D");
                 dic["msg"] = GetExceptionMessage(ex);
                 dic["url"] = url;
                 dic["ip"] = userHostAddress;
+                dic["sip"] = serverIp;
                 dic["user"] = user;
+
+                if (extend != null)
+                {
+                    foreach (KeyValuePair<string, string> item in extend)
+                    {
+                        dic["extend_" + item.Key] = item.Value;
+                    }
+                }
 
                 Post(dic);    
 
@@ -56,12 +79,28 @@ namespace TrackerClient
 
         }
 
-        public static void OperateLog(string trackUser, string action, string section = "")
+
+        public static void OperateLog(string trackUser, string action)
         {
-            OperateLog(trackUser, action, ActionType.None);
+            OperateLog(trackUser, action, ActionType.None, "", null);
         }
 
-        public static void OperateLog(string trackUser , string action , ActionType actionType ,string section="")
+        public static void OperateLog(string trackUser, string action, Dictionary<string,string> extend)
+        {
+            OperateLog(trackUser, action, ActionType.None, "", extend);
+        }
+
+        public static void OperateLog(string trackUser, string action, string section)
+        {
+            OperateLog(trackUser, action, ActionType.None, section, null);
+        }
+
+        public static void OperateLog(string trackUser, string action, string section,Dictionary<string,string> extend)
+        {
+            OperateLog(trackUser, action, ActionType.None, section, extend);
+        }
+
+        public static void OperateLog(string trackUser , string action , ActionType actionType ,string section,Dictionary<string,string> extend)
         {
             string url = HttpContext.Current.Request.Url.OriginalString;
 
@@ -76,6 +115,16 @@ namespace TrackerClient
             System.Diagnostics.StackFrame[] sfs = st.GetFrames();
 
             Dictionary<string, string> dic2 = new Dictionary<string, string>();
+
+            if (extend != null)
+            {
+                foreach (KeyValuePair<string, string> item in extend)
+                {
+                    dic2["extend_" + item.Key] = item.Value;
+                }
+            }
+                
+
             for (int u = 0; u < sfs.Length; u++)
             {
                 System.Reflection.MethodBase mb = sfs[u].GetMethod();
@@ -98,9 +147,20 @@ namespace TrackerClient
 
             Task.Factory.StartNew(() =>
             {
+                string name = Dns.GetHostName();
+                IPHostEntry me = Dns.GetHostEntry(name);
+                string serverIp = "";
+                foreach (IPAddress ip in me.AddressList)
+                {
+                    if (!ip.IsIPv6LinkLocal)
+                        serverIp += ip.ToString() + "&";
+                }
+                serverIp = serverIp.Trim('&');
+
 
                 Dictionary<string, string> dic = new Dictionary<string, string>();
                 dic["key"] = ProjectKey;
+                dic["subkey"] = SubKey;
                 dic["type"] = LogType.OperateLog.ToString("D");
                 dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
                 dic["status"] = LogStatus.Send.ToString("D");
@@ -110,6 +170,7 @@ namespace TrackerClient
                 dic["section"] = section;
                 dic["url"] = url;
                 dic["ip"] = userHostAddress;
+                dic["sip"] = serverIp;
 
                 foreach (KeyValuePair<string, string> item in dic2)
                 {
@@ -127,6 +188,7 @@ namespace TrackerClient
             Task.Factory.StartNew(() =>
             {
                 dic["key"] = ProjectKey;
+                dic["subkey"] = SubKey;
                 dic["type"] = LogType.SystemLog.ToString("D");
                 dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
                 dic["status"] = LogStatus.Send.ToString("D");
@@ -167,6 +229,8 @@ namespace TrackerClient
             request.Abort();
         }
 
+
+        
         private static string GetExceptionMessage(Exception ex)
         {
             string msg = "";

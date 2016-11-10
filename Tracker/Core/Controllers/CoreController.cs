@@ -232,6 +232,15 @@ namespace Core.Controllers
                     
                 }
 
+                Dictionary<string, string> extend = new Dictionary<string, string>();
+
+                foreach (string key in dic.Keys)
+                {
+                    if (key.Contains("extend"))
+                        extend[key.Replace("extend_", "")] = dic[key];
+
+                }
+                
                 using (var bucket = Cluster.OpenBucket("default"))
                 {
                     string key = "wms_operate_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
@@ -243,6 +252,7 @@ namespace Core.Controllers
                         {
                             LogId = key,
                             ProjectKey = dic["key"],
+                            SubKey = dic["subkey"],
                             Type = dic["type"],
                             Status = dic["status"],
                             CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
@@ -252,7 +262,9 @@ namespace Core.Controllers
                             ActionType = dic["actionType"],
                             Section = dic["section"],
                             Stack = stack,
-                            IP = dic["ip"]
+                            Extend = extend,
+                            RequestIP = dic["ip"],
+                            ServerIP = dic["sip"]
                         }
                     };
 
@@ -314,6 +326,7 @@ namespace Core.Controllers
                         {
                             LogId = key,
                             ProjectKey = dic["key"],
+                            SubKey = dic["subkey"],
                             Type = dic["type"],
                             Status = dic["status"],
                             CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
@@ -323,10 +336,11 @@ namespace Core.Controllers
                             EndTime = end,
                             QueryString = dic["query"],
                             PostArgument = argument,
-                            IP = dic["ip"],
+                            RequestIP = dic["ip"],
                             Cookies = cookies,
                             StatusCode = dic["code"],
-                            Method = dic["method"]
+                            Method = dic["method"],
+                            ServerIP = dic["sip"]
                         }
                     };
 
@@ -350,6 +364,15 @@ namespace Core.Controllers
 
                 Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
 
+                Dictionary<string, string> extend = new Dictionary<string, string>();
+
+                foreach (string key in dic.Keys)
+                {
+                    if (key.Contains("extend"))
+                        extend[key.Replace("extend_", "")] = dic[key];
+
+                }
+
                 using (var bucket = Cluster.OpenBucket("default"))
                 {
                     string key = "wms_exception_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
@@ -361,12 +384,15 @@ namespace Core.Controllers
                         {
                             LogId = key,
                             ProjectKey = dic["key"],
+                            SubKey = dic["subkey"],
                             Type = dic["type"],
                             Status = dic["status"],
                             CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
                             Url = dic["url"],
                             ExceptionMessage = dic["msg"],
-                            IP = dic["ip"],
+                            RequestIP = dic["ip"],
+                            ServerIP = dic["sip"],
+                            Extend = extend,
                             User = dic["user"]
                         }
                     };
@@ -410,10 +436,11 @@ namespace Core.Controllers
             }
         }
 
+        
         // GET: Core/Edit/5
-        public ActionResult Edit(int id)
+        public ActionResult Edit(int? id)
         {
-            return View();
+            return View("EditProfile");
         }
 
         // POST: Core/Edit/5

@@ -184,10 +184,34 @@
   <ItemGroup>
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\components-rounded.min.css" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Img\accordion-plusminus.png" />
+    <Content Include="Img\ajax-loading.gif" />
+    <Content Include="Img\ajax-modal-loading.gif" />
+    <Content Include="Img\datatable-row-openclose.png" />
+    <Content Include="Img\input-spinner.gif" />
+    <Content Include="Img\loading-spinner-blue.gif" />
+    <Content Include="Img\loading-spinner-default.gif" />
+    <Content Include="Img\loading-spinner-grey.gif" />
+    <Content Include="Img\loading.gif" />
+    <Content Include="Img\overlay-icon.png" />
+    <Content Include="Img\portlet-collapse-icon-white.png" />
+    <Content Include="Img\portlet-collapse-icon.png" />
+    <Content Include="Img\portlet-config-icon-white.png" />
+    <Content Include="Img\portlet-config-icon.png" />
+    <Content Include="Img\portlet-expand-icon-white.png" />
+    <Content Include="Img\portlet-expand-icon.png" />
+    <Content Include="Img\portlet-reload-icon-white.png" />
+    <Content Include="Img\portlet-reload-icon.png" />
+    <Content Include="Img\portlet-remove-icon-white.png" />
+    <Content Include="Img\portlet-remove-icon.png" />
+    <Content Include="Img\remove-icon-small.png" />
+    <Content Include="Img\syncfusion-icons-white.png" />
+    <Content Include="Img\syncfusion-icons.png" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
@@ -227,10 +251,10 @@
     <Content Include="Views\Account\Manage.cshtml" />
     <Content Include="Views\Account\Register.cshtml" />
     <Content Include="Views\Shared\_LoginPartial.cshtml" />
+    <Content Include="Views\Core\EditProfile.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Views\Core\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff" />

@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CoreProfile.cs" />
     <Compile Include="EnumClass.cs" />
     <Compile Include="ExceptionLog.cs" />
     <Compile Include="HubUrl.cs" />

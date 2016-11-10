@@ -19,7 +19,11 @@ namespace WebApp
 
         protected void btnOperate_Click(object sender, EventArgs e)
         {
-            Client.OperateLog("paulhuang", "test", "f1");
+            Dictionary<string, string> extend = new Dictionary<string, string>();
+            extend["note"] = "123455";
+            extend["mark"] = "asdfg";
+
+            Client.OperateLog("paulhuang", "test", "f1",extend);
         }
 
         protected void btnException_Click(object sender, EventArgs e)

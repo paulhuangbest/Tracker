@@ -10,35 +10,54 @@
 <head>
     <meta name="viewport" content="width=device-width" />
     <title></title>
+    @Styles.Render("~/Content/bootstrapcss")
 </head>
 <body>
-    <div>
-        <table style="border:solid 1px red" border="1" cellpadding="5" cellspacing="0" width="100%">
-            <tr>
-                <td>项目</td>
-                <td>类型</td>
-                <td>URL</td>
-                <td>状态</td>
-                <td>传入时间</td>
-                <td>传出时间</td>
-                <td>队列</td>
-                <td>内容</td>
-            </tr>
-            @foreach (HubUrl url in Model)
-            {
-                <tr>
-                    <td>@url.ProjectKey</td>
-                    <td>@url.Type</td>
-                    <td>@url.Url</td>
-                    <td>@url.Status</td>
-                    <td>@url.InDate.ToString("yyyy-MM-dd HH:mm:ss:fff")</td>
-                    <td>@url.OutDate.ToString("yyyy-MM-dd HH:mm:ss:fff")</td>
-                    <td>@url.MQ</td>
-                    <td>@url.Body</td>
-                </tr>
-            }
-        </table>
-        
+    <div class="portlet box yellow">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-comments"></i>Receive Monitor
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
+                <a href="javascript:;" class="reload" data-original-title="" title=""> </a>
+                <a href="javascript:;" class="remove" data-original-title="" title=""> </a>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <div class="table-scrollable">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>                            
+                            <th>项目</th>
+                            <th>类型</th>
+                            <th>URL</th>
+                            <th>状态</th>
+                            <th>传入时间</th>
+                            <th>传出时间</th>
+                            <th>队列</th>
+                            <th>内容</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (HubUrl url in Model)
+                        {
+                            <tr>
+                                <td>@url.ProjectKey</td>
+                                <td class="active">@url.Type</td>
+                                <td class="success">@url.Url</td>
+                                <td class="success">@url.Status</td>
+                                <td class="warning">@url.InDate.ToString("yyyy-MM-dd HH:mm:ss:fff")</td>
+                                <td class="warning">@url.OutDate.ToString("yyyy-MM-dd HH:mm:ss:fff")</td>
+                                <td class="danger">@url.MQ</td>
+                                <td class="danger">@url.Body</td>
+                            </tr>
+                        }                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </body>
 </html>

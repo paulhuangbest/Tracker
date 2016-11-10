@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Web;
 
@@ -65,6 +66,19 @@ namespace TrackerClient
 
             TrackLog["ip"] = userHostAddress;
 
+
+            string name = Dns.GetHostName();
+            IPHostEntry me = Dns.GetHostEntry(name);
+            string serverIp = "";
+            foreach (IPAddress ip in me.AddressList)
+            {
+                if (!ip.IsIPv6LinkLocal)
+                    serverIp += ip.ToString() + "&";
+            }
+            serverIp = serverIp.Trim('&');
+
+            TrackLog["sip"] = serverIp;
+
             string strCookies = "";
             foreach (string key in context.Request.Cookies.Keys)
             {
@@ -99,6 +113,7 @@ namespace TrackerClient
             TrackLog["cookies"] += strCookies;
 
             TrackLog["code"] = response.StatusCode.ToString();
+            
 
             Client.SystemLog(TrackLog);
 
