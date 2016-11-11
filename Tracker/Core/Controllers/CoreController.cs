@@ -440,29 +440,210 @@ namespace Core.Controllers
         // GET: Core/Edit/5
         public ActionResult Edit(int? id)
         {
-            return View("EditProfile");
+            return View("ProfileDetail");
         }
 
-        // POST: Core/Edit/5
+        
         [HttpPost]
-        public ActionResult Edit(int id, FormCollection collection)
+        public JsonResult Upsert(CoreProfile profile)
         {
-            try
+            try 
             {
-                // TODO: Add update logic here
+                using (var bucket = Cluster.OpenBucket("TrackInfo"))
+                {
+                    profile.ModifyTime = DateTime.Now;
 
-                return RedirectToAction("Index");
+                    string key = profile.ProjectKey + "_profile_" + profile.ModifyTime.ToString("yyyyMMddHHmmssfff");
+
+                    profile.ProfileKey = key;
+
+                    var document = new Document<CoreProfile>()
+                    {
+                        Id = key,
+                        Content = profile
+                    };
+
+                    var upsert = bucket.Upsert(document);
+                }
+
+                return Json(new ResultDTO()
+                {
+                    Status = "Success",
+                    Message = "",
+                    Data = ""
+                });
             }
-            catch
+            catch(Exception e) 
             {
-                return View();
+                return Json(new ResultDTO()
+                {
+                    Status = "Fail",
+                    Message = "",
+                    Data = ""
+                });
             }
+            
+
+            
         }
 
-        // GET: Core/Delete/5
-        public ActionResult Delete(int id)
+        private void CreateMQ(CoreProfile profile)
         {
-            return View();
+            if (HttpContext.Application["TaskList"] == null)
+                HttpContext.Application["TaskList"] = new List<Contain>();
+
+
+            var factory = new ConnectionFactory() { HostName = profile.MQServer };
+            using (var connection = factory.CreateConnection())
+            {
+                using (var channel = connection.CreateModel())
+                {
+                    channel.ExchangeDeclare(exchange: "direct_" + profile.ProjectKey,
+                                            type: "direct");
+
+
+                    string[] types = Enum.GetNames(typeof(LogType));
+
+                    foreach (string type in types)
+                    {
+                        string queue = "", severity = "";
+
+                        switch (type)
+                        {
+                            case "ExceptionLog":
+                                queue = "mq_exception_" + profile.ProjectKey;
+                                severity = "exception";
+                                break;
+
+                            case "OperateLog":
+                                queue = "mq_operate_" + profile.ProjectKey;
+                                severity = "operate";
+                                break;
+
+                            case "SystemLog":
+                                queue = "mq_system_" + profile.ProjectKey;
+                                severity = "system";
+                                break;
+
+                            case "Normal":
+                                queue = "mq_normal_" + profile.ProjectKey;
+                                severity = "normal";
+                                break;
+                        }
+
+
+
+                        var queueName = channel.QueueDeclare(queue, true, false, false, null);
+
+
+                        channel.QueueBind(queue: queueName,
+                                            exchange: "direct_" + profile.ProjectKey,
+                                            routingKey: severity);
+                        
+                    }
+
+                }
+            }
+
+
+            
+        }
+
+        private void CreateConsumer(string mqName ,string mqServer,EventHandler<BasicDeliverEventArgs> handler)
+        {
+            var tokenSource = new CancellationTokenSource();
+            CancellationToken ct = tokenSource.Token;
+
+            Task t = Task.Run(() =>
+            {
+                var factory = new ConnectionFactory() { HostName = mqServer };
+                using (var connection = factory.CreateConnection())
+                {
+                    using (var channel = connection.CreateModel())
+                    {
+                        var consumer = new EventingBasicConsumer(channel);
+                        consumer.Received += handler;
+
+                        channel.BasicConsume(queue: mqName,
+                             noAck: true,
+                             consumer: consumer);
+
+                        while (true)
+                        {
+                            if (ct.IsCancellationRequested)
+                            {
+                                break;
+                            }
+                            Thread.Sleep(5000);
+                        }
+                    }
+                }
+
+            }, ct);
+
+            Contain c = new Contain { task = t, tokenSource = tokenSource };
+
+            List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
+            tasklist.Add(c);
+        }
+
+        public void InitProfile(string key)
+        {
+            using (var bucket = Cluster.OpenBucket("TrackInfo"))
+            {
+                CoreProfile profile = bucket.GetDocument<CoreProfile>(key).Content;
+
+
+                CreateMQ(profile);
+
+
+                string[] types = Enum.GetNames(typeof(LogType));
+
+                foreach (string type in types)
+                {
+                    switch (type)
+                    {
+                        case "ExceptionLog":
+
+                            for (int i = 0; i < profile.ExceptionConsumerNum; i++)
+                            {
+                                CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveException));
+                            }
+
+                            break;
+
+                        case "OperateLog":
+
+                            for (int i = 0; i < profile.OperateConsumerNum; i++)
+                            {
+                                CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
+
+                            }
+
+                            break;
+
+                        case "SystemLog":
+
+                            for (int i = 0; i < profile.SystemConsumerNum; i++)
+                            {
+                                CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                            }
+
+                            break;
+
+                        case "Normal":
+
+                            for (int i = 0; i < profile.NormalConsumerNum; i++)
+                            {
+                                CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
+                            }
+
+                            break;
+                    }
+                }
+
+
+            }
         }
 
         // POST: Core/Delete/5
@@ -480,5 +661,26 @@ namespace Core.Controllers
                 return View();
             }
         }
+
+        public ActionResult Stop()
+        {
+            List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
+
+            tasklist[0].tokenSource.Cancel(false);
+            if (tasklist[0].task != null && (tasklist[0].task.Status == TaskStatus.Canceled || tasklist[0].task.Status == TaskStatus.RanToCompletion || tasklist[0].task.Status == TaskStatus.Faulted))
+                tasklist[0].task.Dispose();
+
+            tasklist.RemoveAt(0);
+
+            return View("Index");
+        }
+
+
+    }
+
+    public class Contain
+    {
+        public Task task { get; set; }
+        public CancellationTokenSource tokenSource { get; set; }
     }
 }

@@ -1,0 +1,170 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="../../Content/components-rounded.min.css" rel="stylesheet" id="style_components" type="text/css" />
+
+<script>
+    function UpsertProfile() {
+        $("#btnSubmit").attr("disabled", "true");
+        //$("#btnAdd").unbind("click", AddProject);
+
+        var projectKey = $("#txtProKey").val();
+        var enable = $("#chkEnable").prop('checked');
+        var systemNum = $("#txtSysNum").val();
+        var operateNum = $("#txtOpNum").val();
+        var exceptionNum = $("#txtExNum").val();
+        var normalNum = $("#txtNorNum").val();
+        
+
+        $.ajax({
+            url: '/core/upsert',
+            type: 'post',
+            dataType: 'json',
+            data: { ProjectKey: projectKey, Enable: enable, SystemConsumerNum: systemNum, OperateConsumerNum: operateNum, ExceptionConsumerNum: exceptionNum, NormalConsumerNum: normalNum },
+            success: function (data) {
+                if (data.Status == "Success")
+                    bootbox.alert('' + '成功');
+                else
+                    bootbox.alert('' + '失败');
+
+                $("#btnSubmit").removeAttr("disabled");
+
+            },
+            error: function () {
+                bootbox.alert("发生错误");
+                $("#btnSubmit").removeAttr("disabled");
+
+            }
+        })
+    }
+
+    function Goback() {
+        location.href = "/home";
+    }
+
+
+    $(document).ready(
+        function () {
+            $("#btnSubmit").bind("click", UpsertProfile);
+            $("#btnCancel").bind("click", Goback);
+        }
+    );
+</script>
+<div class="portlet box yellow">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-gift"></i>Core Monitor
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="tabbable-custom ">
+            <ul class="nav nav-tabs ">
+                <li class="">
+                    <a href="#tab_5_1" data-toggle="tab" aria-expanded="false"> Section 1 </a>
+                </li>
+                <li class="">
+                    <a href="#tab_5_2" data-toggle="tab" aria-expanded="false"> Section 2 </a>
+                </li>
+                <li class="active">
+                    <a href="#tab_5_3" data-toggle="tab" aria-expanded="true"> Profile </a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane" id="tab_5_1">
+                    <p> I'm in Section 1. </p>
+                    <p>
+                        Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex
+                        ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat.
+                    </p>
+                </div>
+                <div class="tab-pane" id="tab_5_2">
+                    <p> Howdy, I'm in Section 2. </p>
+                    <p>
+                        Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse
+                        molestie consequat. Ut wisi enim ad minim veniam, quis nostrud exerci tation.
+                    </p>
+                    <p>
+                        <a class="btn green" href="ui_tabs_accordions_navs.html#tab_5_2" target="_blank"> Activate this tab via URL </a>
+                    </p>
+                </div>
+                <div class="tab-pane active" id="tab_5_3">
+                    <div class="portlet box purple " style="width:400px">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="fa fa-gift"></i> New Core Profile
+                            </div>
+                            <div class="tools">
+                                <a href="" class="collapse" data-original-title="" title=""> </a>
+                                <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
+                                <a href="" class="reload" data-original-title="" title=""> </a>
+                                <a href="" class="remove" data-original-title="" title=""> </a>
+                            </div>
+                        </div>
+                        <div class="portlet-body form">
+                            <form class="form-horizontal" role="form" action="core/upsert">
+                                <div class="form-body">
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">Project Key</label>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" placeholder="Default Input" id="txtProKey">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">Enable</label>
+                                        <div class="col-md-6">
+                                            <div class="checkbox-list">
+                                                <label class="checkbox-inline">
+                                                    <div class="checker" id="uniform-inlineCheckbox21"><span class=""><input type="checkbox" id="chkEnable" value="1"></span></div>
+                                                </label>                                                
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">System Consumer Num</label>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" placeholder="Default Input" id="txtSysNum">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">Operate Consumer Num</label>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" placeholder="Default Input" id="txtOpNum">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">Exception Consumer Num</label>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" placeholder="Default Input" id="txtExNum">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">Normal Consumer Num</label>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" placeholder="Default Input" id="txtNorNum">
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-actions right">
+                                    <button type="button" id="btnCancel" class="btn default">Cancel</button>
+                                    <button type="submit" id="btnSubmit" class="btn green">Submit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

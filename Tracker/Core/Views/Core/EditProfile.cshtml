@@ -2,6 +2,30 @@
     Layout = null;
 }
 
+@{
+    string name = "";
+    string url = "";
+    string method = "";
+    string projectId = "";
+    string description = "";
+    string example = "";
+    string http = "add";
+    string msg = "创建";
+    string apiId = "";
+
+    if (Model != null)
+    {
+        projectId = Model.ProjectID.ToString();
+        name = Model.Name;
+        url = Model.Url;
+        method = Model.Method;
+        description = Model.Description;
+        example = Model.Example;
+        http = "update";
+        msg = "更新";
+        apiId = Model.ApiID.ToString();
+    }
+}
 <!DOCTYPE html>
 
 <html>
@@ -9,6 +33,54 @@
     <meta name="viewport" content="width=device-width" />
     <title></title>
     @Styles.Render("~/Content/bootstrapcss")
+    <script>
+
+        function AddApi() {
+            $("#btnSubmit").attr("disabled", "true");
+            //$("#btnAdd").unbind("click", AddProject);
+
+            var idProject = $("#ddlProject").val();
+            var idMethod = $("#ddlMethod").val();
+            var strName = $("#txtName").val();
+            var strUrl = $("#txtUrl").val();
+            var strDescription = htmlEncode($("#txtDescription").val());
+            var strExample = htmlEncode($("#txtExample").val());
+
+
+            $.ajax({
+                url: '/antapi/@http',
+                type: 'post',
+                dataType: 'json',
+                data: { ProjectID: idProject, Name: strName, Description: strDescription, Url: strUrl, Method: idMethod, Example: strExample, ApiID: '@apiId' },
+                success: function (data) {
+                    if (data.Status == "Success")
+                        bootbox.alert('@msg' + '成功');
+                    else
+                        bootbox.alert('@msg' + '失败');
+
+                    $("#btnSubmit").removeAttr("disabled");
+
+                },
+                error: function () {
+                    bootbox.alert("发生错误");
+                    $("#btnSubmit").removeAttr("disabled");
+
+                }
+            })
+        }
+
+        function Goback() {
+            location.href = "/home";
+        }
+
+
+        $(document).ready(
+            function () {
+                $("#btnSubmit").bind("click", AddApi);
+                $("#btnCancel").bind("click", Goback);
+            }
+        );
+    </script>
 </head>
 <body>
     <div class="portlet box yellow">
@@ -66,7 +138,7 @@
                                 </div>
                             </div>
                             <div class="portlet-body form">
-                                <form class="form-horizontal" role="form">
+                                <form class="form-horizontal" role="form" action="core/upsert">
                                     <div class="form-body">
                                         <div class="form-group">
                                             <label class="col-md-6 control-label">Project Key</label>
@@ -84,7 +156,7 @@
                                                     </label>
                                                     <label class="radio-inline">
                                                         <div class="radio" id="uniform-optionsRadios26"><span class="checked"><input type="radio" name="optionsRadios" id="optionsRadios26" value="option2" checked=""></span></div> False
-                                                    </label>                                                   
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
@@ -119,8 +191,8 @@
 
                                     </div>
                                     <div class="form-actions right">
-                                        <button type="button" class="btn default">Cancel</button>
-                                        <button type="submit" class="btn green">Submit</button>
+                                        <button type="button" id="btnCancel" class="btn default">Cancel</button>
+                                        <button type="submit" id="btnSubmit" class="btn green">Submit</button>
                                     </div>
                                 </form>
                             </div>

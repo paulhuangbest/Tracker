@@ -46,6 +46,7 @@
     <Compile Include="NormalLog.cs" />
     <Compile Include="OperateLog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResultDTO.cs" />
     <Compile Include="SystemLog.cs" />
     <Compile Include="TrackLog.cs" />
   </ItemGroup>
