@@ -256,6 +256,7 @@
     <Content Include="Views\Shared\_LoginPartial.cshtml" />
     <Content Include="Views\Core\EditProfile.cshtml" />
     <Content Include="Views\Core\ProfileDetail.cshtml" />
+    <Content Include="Views\Core\Profiles.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

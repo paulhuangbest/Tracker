@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Entity
 {
+    [Serializable]
     public class CoreProfile
     {
         public string ProfileKey { get; set; }
@@ -25,5 +27,14 @@ namespace Entity
         public DateTime ModifyTime { get; set; }
 
         public string MQServer { get; set; }
+    }
+
+    [Serializable]
+    public class Contain
+    {
+        public Task task { get; set; }
+        public CancellationTokenSource tokenSource { get; set; }
+        public string taskKey { get; set; }
+        public string projectKey { get; set; }
     }
 }

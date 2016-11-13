@@ -11,6 +11,7 @@ using System.Web.Mvc;
 using Entity;
 using Couchbase;
 using Newtonsoft.Json;
+using Couchbase.N1QL;
 
 namespace Core.Controllers
 {
@@ -51,7 +52,7 @@ namespace Core.Controllers
                         consumer.Received += (model, ea) =>
                         {
                             var body = ea.Body;
-                            var message = Encoding.UTF8.GetString(body);
+                            var message = System.Text.Encoding.UTF8.GetString(body);
                             var routingKey = ea.RoutingKey;
 
                         };
@@ -160,7 +161,7 @@ namespace Core.Controllers
                                 consumer.Received += (model, ea) =>
                                 {
                                     var body = ea.Body;
-                                    var message = Encoding.UTF8.GetString(body);
+                                    var message = System.Text.Encoding.UTF8.GetString(body);
                                     var routingKey = ea.RoutingKey;
 
                                     using (var bucket = Cluster.OpenBucket())
@@ -214,7 +215,7 @@ namespace Core.Controllers
             try
             {
                 var body = ea.Body;
-                var message = Encoding.UTF8.GetString(body);
+                var message = System.Text.Encoding.UTF8.GetString(body);
                 var routingKey = ea.RoutingKey;
 
                 Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
@@ -285,7 +286,7 @@ namespace Core.Controllers
             try
             {
                 var body = ea.Body;
-                var message = Encoding.UTF8.GetString(body);
+                var message = System.Text.Encoding.UTF8.GetString(body);
                 var routingKey = ea.RoutingKey;
 
                 Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
@@ -359,7 +360,7 @@ namespace Core.Controllers
             try
             {
                 var body = ea.Body;
-                var message = Encoding.UTF8.GetString(body);
+                var message = System.Text.Encoding.UTF8.GetString(body);
                 var routingKey = ea.RoutingKey;
 
                 Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
@@ -443,6 +444,31 @@ namespace Core.Controllers
             return View("ProfileDetail");
         }
 
+        public  ActionResult Profiles()
+        {
+            
+            using (var bucket = Cluster.OpenBucket("TrackInfo"))
+            {
+                
+                var queryRequest = new QueryRequest()
+                .Statement("select enable,exceptionConsumerNum,modifyTime,mqServer,normalConsumerNum,operateConsumerNum,profileKey,projectKey,systemConsumerNum from TrackInfo where profileKey is not null")
+                .Metrics(false);
+
+
+                
+                var result = bucket.Query<CoreProfile>(queryRequest);
+                
+                
+                //CoreProfile b = bucket.Get<CoreProfile>("wms_profile_20161112014426258").Value;
+                 return View("Profiles",result.Rows); 
+            }
+
+            //var result = Cluster.Query<CoreProfile>("select * from TrackInfo where profileKey is not null");
+
+                  
+            
+            
+        }
         
         [HttpPost]
         public JsonResult Upsert(CoreProfile profile)
@@ -463,7 +489,7 @@ namespace Core.Controllers
                         Content = profile
                     };
 
-                    var upsert = bucket.Upsert(document);
+                    var upsert = bucket.Upsert<CoreProfile>(document);
                 }
 
                 return Json(new ResultDTO()
@@ -489,9 +515,6 @@ namespace Core.Controllers
 
         private void CreateMQ(CoreProfile profile)
         {
-            if (HttpContext.Application["TaskList"] == null)
-                HttpContext.Application["TaskList"] = new List<Contain>();
-
 
             var factory = new ConnectionFactory() { HostName = profile.MQServer };
             using (var connection = factory.CreateConnection())
@@ -549,8 +572,106 @@ namespace Core.Controllers
             
         }
 
+        public JsonResult StartConsumer(FormCollection collection)
+        {
+            List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
+
+            if (tasklist != null)
+            {
+                string key = collection["key"];
+                string pkey = collection["pkey"];
+
+                using (var bucket = Cluster.OpenBucket("TrackInfo"))
+                {
+
+                    CoreProfile profile = bucket.Get<CoreProfile>(pkey).Value;
+                    switch (key)
+                    {
+                        case "system":
+                            for (int i = 0; i < profile.SystemConsumerNum; i++)
+                            {
+                                CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                            }
+                            break;
+
+                    }
+                }
+                
+                
+            }
+
+            return Json(new ResultDTO()
+            {
+                Status = "Success",
+                Message = "",
+                Data = ""
+            });
+            //
+        }
+
+        public JsonResult RemoveConsumer(string type)
+        {
+            StopConsumer(type);
+
+            return Json(new ResultDTO()
+            {
+                Status = "Success",
+                Message = "",
+                Data = ""
+            },JsonRequestBehavior.AllowGet);        
+        }
+
+        private void StopConsumer(string mqType)
+        {
+            if (string.IsNullOrEmpty(mqType))
+            {
+                List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
+
+                if (tasklist != null)
+                {
+                    foreach (Contain c in tasklist)
+                    {
+                        c.tokenSource.Cancel(false);
+
+                        if (c.task != null && (c.task.Status == TaskStatus.Canceled || c.task.Status == TaskStatus.RanToCompletion || c.task.Status == TaskStatus.Faulted))
+                            c.task.Dispose();
+
+
+                    }
+                    tasklist.Clear();
+                }
+            }
+            else
+            {
+                List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
+
+                if (tasklist != null)
+                {
+                    List<Contain> list = tasklist.Where(p => p.taskKey.Contains(mqType)).ToList();
+
+                    foreach (Contain c in list)
+                    {
+                        c.tokenSource.Cancel(false);
+
+                        if (c.task != null && (c.task.Status == TaskStatus.Canceled || c.task.Status == TaskStatus.RanToCompletion || c.task.Status == TaskStatus.Faulted))
+                            c.task.Dispose();
+
+
+                        tasklist.Remove(c);
+                    }
+                }
+
+            }
+
+        }
+
         private void CreateConsumer(string mqName ,string mqServer,EventHandler<BasicDeliverEventArgs> handler)
         {
+
+            if (HttpContext.Application["TaskList"] == null)
+                HttpContext.Application["TaskList"] = new List<Contain>();
+            
+
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
@@ -581,68 +702,107 @@ namespace Core.Controllers
 
             }, ct);
 
-            Contain c = new Contain { task = t, tokenSource = tokenSource };
+
+            Contain c = new Contain { task = t, tokenSource = tokenSource, taskKey = mqName };
 
             List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
             tasklist.Add(c);
         }
 
-        public void InitProfile(string key)
+        public ActionResult InitProfile(string key)
         {
-            using (var bucket = Cluster.OpenBucket("TrackInfo"))
+            try
             {
-                CoreProfile profile = bucket.GetDocument<CoreProfile>(key).Content;
+                StopConsumer(null);
 
-
-                CreateMQ(profile);
-
-
-                string[] types = Enum.GetNames(typeof(LogType));
-
-                foreach (string type in types)
+                using (var bucket = Cluster.OpenBucket("TrackInfo"))
                 {
-                    switch (type)
+                    CoreProfile profile = bucket.GetDocument<CoreProfile>(key).Content;
+
+
+                    CreateMQ(profile);
+
+
+                    string[] types = Enum.GetNames(typeof(LogType));
+
+                    foreach (string type in types)
                     {
-                        case "ExceptionLog":
+                        switch (type)
+                        {
+                            case "ExceptionLog":
 
-                            for (int i = 0; i < profile.ExceptionConsumerNum; i++)
-                            {
-                                CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveException));
-                            }
+                                for (int i = 0; i < profile.ExceptionConsumerNum; i++)
+                                {
+                                    CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveException));
+                                }
 
-                            break;
+                                break;
 
-                        case "OperateLog":
+                            case "OperateLog":
 
-                            for (int i = 0; i < profile.OperateConsumerNum; i++)
-                            {
-                                CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
+                                for (int i = 0; i < profile.OperateConsumerNum; i++)
+                                {
+                                    CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
 
-                            }
+                                }
 
-                            break;
+                                break;
 
-                        case "SystemLog":
+                            case "SystemLog":
 
-                            for (int i = 0; i < profile.SystemConsumerNum; i++)
-                            {
-                                CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
-                            }
+                                for (int i = 0; i < profile.SystemConsumerNum; i++)
+                                {
+                                    CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                                }
 
-                            break;
+                                break;
 
-                        case "Normal":
+                            case "Normal":
 
-                            for (int i = 0; i < profile.NormalConsumerNum; i++)
-                            {
-                                CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
-                            }
+                                for (int i = 0; i < profile.NormalConsumerNum; i++)
+                                {
+                                    CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
+                                }
 
-                            break;
+                                break;
+                        }
                     }
+
                 }
 
+                using (var bucket = Cluster.OpenBucket("TrackInfo"))
+                {
 
+                    var queryRequest = new QueryRequest()
+                    .Statement("select enable,exceptionConsumerNum,modifyTime,mqServer,normalConsumerNum,operateConsumerNum,profileKey,projectKey,systemConsumerNum from TrackInfo where profileKey is not null")
+                    .Metrics(false);
+
+
+
+                    var result = bucket.Query<CoreProfile>(queryRequest);
+
+
+                    //CoreProfile b = bucket.Get<CoreProfile>("wms_profile_20161112014426258").Value;
+                    return View("Profiles", result.Rows);
+                }
+                //return Json(new ResultDTO()
+                //{
+                //    Status = "Success",
+                //    Message = "",
+                //    Data = ""
+                //},JsonRequestBehavior.AllowGet);
+
+
+            }
+            catch (Exception e)
+            {
+                return View("Profiles");
+                //return Json(new ResultDTO()
+                //{
+                //    Status = "Fail",
+                //    Message = "",
+                //    Data = ""
+                //}, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -678,9 +838,5 @@ namespace Core.Controllers
 
     }
 
-    public class Contain
-    {
-        public Task task { get; set; }
-        public CancellationTokenSource tokenSource { get; set; }
-    }
+
 }

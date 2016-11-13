@@ -11,6 +11,7 @@
 
         var projectKey = $("#txtProKey").val();
         var enable = $("#chkEnable").prop('checked');
+        var mqServer = $("#txtMQServer").val();
         var systemNum = $("#txtSysNum").val();
         var operateNum = $("#txtOpNum").val();
         var exceptionNum = $("#txtExNum").val();
@@ -21,7 +22,7 @@
             url: '/core/upsert',
             type: 'post',
             dataType: 'json',
-            data: { ProjectKey: projectKey, Enable: enable, SystemConsumerNum: systemNum, OperateConsumerNum: operateNum, ExceptionConsumerNum: exceptionNum, NormalConsumerNum: normalNum },
+            data: { ProjectKey: projectKey, Enable: enable,MQServer:mqServer, SystemConsumerNum: systemNum, OperateConsumerNum: operateNum, ExceptionConsumerNum: exceptionNum, NormalConsumerNum: normalNum },
             success: function (data) {
                 if (data.Status == "Success")
                     bootbox.alert('' + '成功');
@@ -123,6 +124,13 @@
                                                     <div class="checker" id="uniform-inlineCheckbox21"><span class=""><input type="checkbox" id="chkEnable" value="1"></span></div>
                                                 </label>                                                
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">MQ Server</label>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" placeholder="Default Input" id="txtMQServer">
                                         </div>
                                     </div>
 

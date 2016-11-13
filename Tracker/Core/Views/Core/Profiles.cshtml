@@ -1,0 +1,137 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using Entity
+@model List<CoreProfile>
+<script>
+    function stopconsumer(key, obj,pkey) {
+        $.ajax({
+            url: '/core/removeconsumer?type=' + key,
+            type: 'get',
+            dataType: 'json',
+            success: function (data) {
+                if (data.Status == "Success") {
+
+                    $(obj).text("Start");
+                    $(obj).removeAttr("onclick");
+
+                    $(obj).bind("click", function () {
+
+                        startconsumer(key, obj,pkey);
+                    })
+
+                    bootbox.alert('' + '成功');
+
+                }
+                else
+                    bootbox.alert('' + '失败');
+
+                $(obj).removeAttr("disabled");
+               
+                
+
+            },
+            error: function () {
+                bootbox.alert("发生错误");
+                $(obj).removeAttr("disabled");
+
+            }
+        })
+    }
+
+
+    function startconsumer(key, obj,pkey)
+    {
+        $.ajax({
+            url: '/core/startconsumer',
+            type: 'post',
+            dataType: 'json',
+            data:{key:key,pkey:pkey},
+            success: function (data) {
+                if (data.Status == "Success") {
+
+                    $(obj).text("Stop");
+                    $(obj).removeAttr("onclick");
+
+                    $(obj).bind("click", function () {
+
+                        stopconsumer(key, obj,pkey);
+                    })
+
+                    bootbox.alert('' + '成功');
+
+                }
+                else
+                    bootbox.alert('' + '失败');
+
+                $(obj).removeAttr("disabled");
+
+
+
+            },
+            error: function () {
+                bootbox.alert("发生错误");
+                $(obj).removeAttr("disabled");
+
+            }
+        });
+    }
+
+</script>
+<table class="table table-hover">
+    <tr>
+        <td>ProfileKey</td>
+        <td>ProjectKey</td>
+        <td>Enable</td>
+        <td>MQServer</td>
+        <td>SystemConsumerNum</td>
+        <td>OperateConsumerNum</td>
+        <td>ExceptionConsumerNum</td>
+        <td>NormalConsumerNum</td>
+        <td>ModifyTime</td>
+        <td>Action</td>
+    </tr>
+    @foreach (CoreProfile profile in Model)
+    {
+        <tr>
+            <td>@profile.ProfileKey</td>
+            <td>@profile.ProjectKey</td>
+            <td>@profile.Enable</td>
+            <td>@profile.MQServer</td>
+            <td>@profile.SystemConsumerNum</td>
+            <td>@profile.OperateConsumerNum</td>
+            <td>@profile.ExceptionConsumerNum</td>
+            <td>@profile.NormalConsumerNum</td>
+            <td>@profile.ModifyTime</td>
+            <td><a href="/core/InitProfile?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Init</a></td>
+        </tr>
+        <tr>
+            <td colspan="9">
+                @{
+                    List<Contain> taskList = HttpContext.Current.Application["TaskList"] as List<Contain>;
+                }
+                @if (taskList != null)
+                { 
+                <table>
+                    <tr>
+                        <td>SystemLog Consumer</td>
+
+                        @{ 
+                         int sysNum = taskList.Where(p => p.taskKey.Contains("system")).Count();
+                        }
+                        <td>@sysNum.ToString()</td>
+                        @if (sysNum == profile.SystemConsumerNum)
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('system',this,'@profile.ProfileKey')">Stop</button></td>
+                        }
+                        else
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('system',this,'@profile.ProfileKey')">Start</button></td>
+                        }
+                    </tr>
+                </table>
+                }
+            </td>
+        </tr>
+    }
+</table>
