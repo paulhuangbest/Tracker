@@ -6,9 +6,10 @@
 <script>
     function stopconsumer(key, obj,pkey) {
         $.ajax({
-            url: '/core/removeconsumer?type=' + key,
-            type: 'get',
+            url: '/core/removeconsumer',
+            type: 'post',
             dataType: 'json',
+            data:{key:key,pkey:pkey},
             success: function (data) {
                 if (data.Status == "Success") {
 
@@ -106,7 +107,7 @@
             <td><a href="/core/InitProfile?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Init</a></td>
         </tr>
         <tr>
-            <td colspan="9">
+            <td colspan="10">
                 @{
                     List<Contain> taskList = HttpContext.Current.Application["TaskList"] as List<Contain>;
                 }
@@ -129,6 +130,54 @@
                             <td><button type="button" class="btn btn-primary" onclick="startconsumer('system',this,'@profile.ProfileKey')">Start</button></td>
                         }
                     </tr>
+                    <tr>
+                        <td>OperateLog Consumer</td>
+                        @{
+                        int opNum = taskList.Where(p => p.taskKey.Contains("operate")).Count();
+                        }
+                        <td>@opNum</td>
+                        @if (opNum == profile.OperateConsumerNum)
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('operate',this,'@profile.ProfileKey')">Stop</button></td>
+                        }
+                        else
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('operate',this,'@profile.ProfileKey')">Start</button></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td>ExceptionLog Consumer</td>
+                        @{
+                        int exNum = taskList.Where(p => p.taskKey.Contains("exception")).Count();
+                        }
+                        <td>@exNum</td>
+                        @if (exNum == profile.ExceptionConsumerNum)
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('exception',this,'@profile.ProfileKey')">Stop</button></td>
+                        }
+                        else
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('exception',this,'@profile.ProfileKey')">Start</button></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td>NormalLog Consumer</td>
+                        @{
+                        int nrNum = taskList.Where(p => p.taskKey.Contains("normal")).Count();
+                        }
+                        <td>@nrNum</td>
+                        @if (nrNum == profile.NormalConsumerNum)
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('normal',this,'@profile.ProfileKey')">Stop</button></td>
+                        }
+                        else
+                        {
+                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('normal',this,'@profile.ProfileKey')">Start</button></td>
+                        }
+                    </tr>
+
+
+
                 </table>
                 }
             </td>
