@@ -401,6 +401,26 @@ namespace Core.Controllers
                     var upsert = bucket.Upsert(document);
 
                 }
+
+                Dictionary<string, List<HeartData>> heartData = HttpContext.Application[dic["key"]] as Dictionary<string, List<HeartData>>;
+
+                if (heartData.Keys.Contains(mqName + "_" + index + 1))
+                {
+                    List<HeartData> list = heartData[mqName + "_" + index + 1];
+
+                    if (list.Count(p => p.Type == "1") >= 5)
+                    {
+                        HeartData data = list.Last(p => p.Type == "1");
+                        list.Remove(data);
+                    }
+
+                    list.Add(new HeartData
+                    {
+                        Type = "1",
+                        Message = "heart",
+                        Time = DateTime.Now
+                    });
+                }
             }
             catch(Exception ex)
             {
@@ -437,11 +457,20 @@ namespace Core.Controllers
             }
         }
 
-        
+
         // GET: Core/Edit/5
-        public ActionResult Edit(int? id)
+        public ActionResult Edit(string key)
         {
-            return View("ProfileDetail");
+            CoreProfile profile = null;
+
+            if (!string.IsNullOrEmpty(key))
+            {
+                using (var bucket = Cluster.OpenBucket("TrackInfo"))
+                {
+                    profile = bucket.GetDocument<CoreProfile>(key).Content;
+                }
+            }
+            return View("ProfileDetail",profile);
         }
 
         public  ActionResult Profiles()
@@ -478,10 +507,18 @@ namespace Core.Controllers
                 using (var bucket = Cluster.OpenBucket("TrackInfo"))
                 {
                     profile.ModifyTime = DateTime.Now;
+                    string key = "";
 
-                    string key = profile.ProjectKey + "_profile_" + profile.ModifyTime.ToString("yyyyMMddHHmmssfff");
+                    if (string.IsNullOrEmpty(profile.ProfileKey))
+                    {
+                        key = profile.ProjectKey + "_profile_" + profile.ModifyTime.ToString("yyyyMMddHHmmssfff");
 
-                    profile.ProfileKey = key;
+                        profile.ProfileKey = key;
+                    }
+                    else
+                    {
+                        key = profile.ProfileKey;
+                    }
 
                     var document = new Document<CoreProfile>()
                     {
@@ -590,28 +627,28 @@ namespace Core.Controllers
                         case "system":
                             for (int i = 0; i < profile.SystemConsumerNum; i++)
                             {
-                                CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                                CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
                             }
                             break;
 
                         case "operate":
                             for (int i = 0; i < profile.OperateConsumerNum; i++)
                             {
-                                CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
+                                CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
                             }
                             break;
 
                         case "exception":
                             for (int i = 0; i < profile.ExceptionConsumerNum; i++)
                             {
-                                CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveException));
+                                CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveException));
                             }
                             break;
 
                         case "normal":
                             for (int i = 0; i < profile.NormalConsumerNum; i++)
                             {
-                                CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
+                                CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
                             }
                             break;
                     }
@@ -720,7 +757,7 @@ namespace Core.Controllers
 
         }
 
-        private void CreateConsumer(string mqName ,string mqServer,string projectKey,EventHandler<BasicDeliverEventArgs> handler)
+        private void CreateConsumer(string mqName ,string mqServer, string projectKey,int index,EventHandler<BasicDeliverEventArgs> handler)
         {
 
             if (HttpContext.Application["TaskList"] == null)
@@ -750,6 +787,26 @@ namespace Core.Controllers
                             {
                                 break;
                             }
+
+                            Dictionary<string, List<HeartData>> heartData = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
+
+                            if (heartData.Keys.Contains(mqName + "_" + index + 1))
+                            {
+                                List<HeartData> list = heartData[mqName + "_" + index + 1];
+
+                                if (list.Count(p => p.Type == "1") >= 5)
+                                {
+                                    HeartData data = list.Last(p => p.Type == "1");
+                                    list.Remove(data);
+                                }
+
+                                list.Add(new HeartData { 
+                                    Type = "1",
+                                    Message = "heart",
+                                    Time = DateTime.Now
+                                });
+                            }
+
                             Thread.Sleep(5000);
                         }
                     }
@@ -762,10 +819,23 @@ namespace Core.Controllers
 
             List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
             tasklist.Add(c);
+
+            Dictionary<string, List<HeartData>> heart = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
+            
+            heart[mqName + "_" + (index + 1)] = new List<HeartData>();
+            //if (!heart.Keys.Contains(mqName))
+            //    heart[mqName + "_1"] = new List<HeartData>();
+            //else
+            //{
+            //    int total = heart.Keys.Count(p => p.Contains(mqName));
+            //    heart[mqName + "_" + (total + 1)] = new List<HeartData>();
+            //}
         }
 
         public ActionResult InitProfile(string key)
         {
+            
+
             try
             {
                 
@@ -778,6 +848,7 @@ namespace Core.Controllers
 
                     CreateMQ(profile);
 
+                    InitHeartData(profile.ProjectKey);
 
                     string[] types = Enum.GetNames(typeof(LogType));
 
@@ -789,7 +860,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.ExceptionConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveException));
+                                    CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveException));
                                 }
 
                                 break;
@@ -798,7 +869,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.OperateConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
+                                    CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
 
                                 }
 
@@ -808,7 +879,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.SystemConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                                    CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
                                 }
 
                                 break;
@@ -817,7 +888,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.NormalConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
+                                    CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
                                 }
 
                                 break;
@@ -878,17 +949,17 @@ namespace Core.Controllers
             }
         }
 
-        public ActionResult Stop()
+        private void InitHeartData(string projectKey)
         {
-            List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
-
-            tasklist[0].tokenSource.Cancel(false);
-            if (tasklist[0].task != null && (tasklist[0].task.Status == TaskStatus.Canceled || tasklist[0].task.Status == TaskStatus.RanToCompletion || tasklist[0].task.Status == TaskStatus.Faulted))
-                tasklist[0].task.Dispose();
-
-            tasklist.RemoveAt(0);
-
-            return View("Index");
+            if (HttpContext.Application[projectKey] == null)
+            {
+                HttpContext.Application[projectKey] = new Dictionary<string, List<HeartData>>();//<consumerName,List<HeartData>>
+            }
+            else
+            {
+                Dictionary<string, List<HeartData>> dic = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
+                dic.Clear();
+            }
         }
 
 

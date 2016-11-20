@@ -42,6 +42,7 @@
     <Compile Include="CoreProfile.cs" />
     <Compile Include="EnumClass.cs" />
     <Compile Include="ExceptionLog.cs" />
+    <Compile Include="HeartData.cs" />
     <Compile Include="HubUrl.cs" />
     <Compile Include="NormalLog.cs" />
     <Compile Include="OperateLog.cs" />
