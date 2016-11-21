@@ -168,13 +168,16 @@
                                         <td>
                                             <a href="/core/edit?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Edit</a>
                                         </td>
+                                        <td>
+                                            <a href="/core/delete?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Del</a>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td colspan="10">
                                             @{
                                     List<Contain> taskList = HttpContext.Current.Application["TaskList"] as List<Contain>;
                                             }
-                                            @if (taskList != null)
+                                            @if (taskList != null && taskList.Count(p=>p.projectKey == profile.ProjectKey) > 0)
                                             {
                                                 <table>
                                                     <tr>

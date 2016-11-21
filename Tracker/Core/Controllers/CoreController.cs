@@ -402,25 +402,25 @@ namespace Core.Controllers
 
                 }
 
-                Dictionary<string, List<HeartData>> heartData = HttpContext.Application[dic["key"]] as Dictionary<string, List<HeartData>>;
+                //Dictionary<string, List<HeartData>> heartData = HttpContext.Application[dic["key"]] as Dictionary<string, List<HeartData>>;
 
-                if (heartData.Keys.Contains(mqName + "_" + index + 1))
-                {
-                    List<HeartData> list = heartData[mqName + "_" + index + 1];
+                //if (heartData.Keys.Contains(mqName + "_" + index + 1))
+                //{
+                //    List<HeartData> list = heartData[mqName + "_" + index + 1];
 
-                    if (list.Count(p => p.Type == "1") >= 5)
-                    {
-                        HeartData data = list.Last(p => p.Type == "1");
-                        list.Remove(data);
-                    }
+                //    if (list.Count(p => p.Type == "1") >= 5)
+                //    {
+                //        HeartData data = list.Last(p => p.Type == "1");
+                //        list.Remove(data);
+                //    }
 
-                    list.Add(new HeartData
-                    {
-                        Type = "1",
-                        Message = "heart",
-                        Time = DateTime.Now
-                    });
-                }
+                //    list.Add(new HeartData
+                //    {
+                //        Type = "1",
+                //        Message = "heart",
+                //        Time = DateTime.Now
+                //    });
+                //}
             }
             catch(Exception ex)
             {
@@ -790,13 +790,13 @@ namespace Core.Controllers
 
                             Dictionary<string, List<HeartData>> heartData = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
 
-                            if (heartData.Keys.Contains(mqName + "_" + index + 1))
+                            if (heartData.Keys.Contains(mqName + "_" + (index + 1)))
                             {
-                                List<HeartData> list = heartData[mqName + "_" + index + 1];
+                                List<HeartData> list = heartData[mqName + "_" + (index + 1)];
 
                                 if (list.Count(p => p.Type == "1") >= 5)
                                 {
-                                    HeartData data = list.Last(p => p.Type == "1");
+                                    HeartData data = list.First(p => p.Type == "1");
                                     list.Remove(data);
                                 }
 
@@ -860,7 +860,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.ExceptionConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveException));
+                                    //CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveException));
                                 }
 
                                 break;
@@ -869,7 +869,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.OperateConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
+                                    //CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
 
                                 }
 
@@ -888,7 +888,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.NormalConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
+                                    //CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
                                 }
 
                                 break;
