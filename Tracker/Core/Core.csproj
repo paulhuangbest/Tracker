@@ -257,6 +257,7 @@
     <Content Include="Views\Core\EditProfile.cshtml" />
     <Content Include="Views\Core\ProfileDetail.cshtml" />
     <Content Include="Views\Core\Profiles.cshtml" />
+    <Content Include="Views\Core\Monitor.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -273,6 +274,13 @@
       <Project>{519fd02b-738e-45fa-932d-fa3583967fb3}</Project>
       <Name>Entity</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Library\Library.csproj">
+      <Project>{b9f50d26-f51e-4053-b6aa-966e39e6d207}</Project>
+      <Name>Library</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

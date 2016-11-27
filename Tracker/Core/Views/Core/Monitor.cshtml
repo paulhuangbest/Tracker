@@ -1,0 +1,130 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Entity
+@model List<CoreProfile>
+
+<link href="../../Content/components-rounded.min.css" rel="stylesheet" id="style_components" type="text/css" />
+
+<div class="portlet box yellow">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-gift"></i>Core Monitor
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="tabbable-custom ">
+            <ul class="nav nav-tabs ">
+                <li class="active">
+                    <a href="/core/monitor"> Statistics </a>
+                </li>
+                <li class="">
+                    <a href="#tab_5_2"> Rules </a>
+                </li>
+                <li class="">
+                    <a href="/core/profiles"> Profiles </a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="tab_5_1">
+                    <table>
+                        <tr>
+                            <td>ProfileKey</td>
+                            <td>ProjectKey</td>
+                            <td>Enable</td>
+                            <td>MQServer</td>
+                            <td>SystemConsumer</td>
+                            <td>OperateConsumer</td>
+                            <td>ExceptionConsumer</td>
+                            <td>NormalConsumer</td>
+
+                        </tr>
+                        @foreach (CoreProfile profile in Model)
+                        {
+                            <tr>
+                                <td>@profile.ProfileKey</td>
+                                <td>@profile.ProjectKey</td>
+                                <td>@profile.Enable</td>
+                                <td>@profile.MQServer</td>
+                                <td>@profile.SystemConsumerNum</td>
+                                <td>@profile.OperateConsumerNum</td>
+                                <td>@profile.ExceptionConsumerNum</td>
+                                <td>@profile.NormalConsumerNum</td>
+
+                            </tr>
+                            <tr>
+                                <td colspan="7">
+                                    @{
+                            Dictionary<string, List<HeartData>> heart = HttpContext.Current.Application[profile.ProjectKey] as Dictionary<string, List<HeartData>>;
+                                    }
+                                    @if (heart != null && heart.Count > 0)
+                                    {
+                                        <table border="1" style="border:1px solid red">
+                                            <tr>
+                                                <th>Consumer</th>
+                                                <th>Heart</th>
+                                                <th>Data</th>
+                                            </tr>
+                                            @foreach (KeyValuePair<string, List<HeartData>> item in heart)
+                                            {
+                                                <tr>
+                                                    <td>@item.Key</td>
+                                                    <td>
+                                                        @foreach (HeartData data in item.Value)
+                                                        {
+                                                            if (data.Type == "1")
+                                                            {
+                                                                <p>Message:@data.Message</p>
+                                                                <p>Time:@data.Time.ToString()</p>
+
+                                                            }
+
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @foreach (HeartData data in item.Value)
+                                                        {
+                                                            if (data.Type == "2")
+                                                            {
+                                                                <p>Message:@data.Message</p>
+                                                                <p>Time:@data.Time.ToString()</p>
+                                                            }
+
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+
+
+                                        </table>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        
+                    </table>
+
+                </div>
+                <div class="tab-pane" id="tab_5_2">
+                    <p> Howdy, I'm in Section 2. </p>
+                    <p>
+                        Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse
+                        molestie consequat. Ut wisi enim ad minim veniam, quis nostrud exerci tation.
+                    </p>
+                    <p>
+                        <a class="btn green" href="ui_tabs_accordions_navs.html#tab_5_2" target="_blank"> Activate this tab via URL </a>
+                    </p>
+                </div>
+                <div class="tab-pane" id="tab_5_3">
+                    
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

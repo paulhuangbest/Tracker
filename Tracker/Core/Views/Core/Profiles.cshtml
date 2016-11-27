@@ -81,6 +81,18 @@
         });
     }
 
+
+    function DeleteProfile(key)
+    {
+        bootbox.confirm("是否要删除？",
+            function (result)
+            {
+                if (result)
+                {
+                    window.location = "/core/delete?key=" + key;
+                }
+            });
+    }
 </script>
 
 <div class="portlet box yellow">
@@ -97,13 +109,13 @@
         <div class="tabbable-custom ">
             <ul class="nav nav-tabs ">
                 <li class="">
-                    <a href="#tab_5_1" data-toggle="tab" aria-expanded="false"> Statistics </a>
+                    <a href="/core/monitor" > Statistics </a>
                 </li>
                 <li class="">
-                    <a href="#tab_5_2" data-toggle="tab" aria-expanded="false"> Rules </a>
+                    <a href="#tab_5_2" > Rules </a>
                 </li>
                 <li class="active">
-                    <a href="#tab_5_3" data-toggle="tab" aria-expanded="true"> Profiles </a>
+                    <a href="/core/profiles" > Profiles </a>
                 </li>
             </ul>
             <div class="tab-content">
@@ -169,7 +181,7 @@
                                             <a href="/core/edit?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Edit</a>
                                         </td>
                                         <td>
-                                            <a href="/core/delete?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Del</a>
+                                            <a href="" class="btn btn-primary btn-lg active" role="button" onclick="DeleteProfile('@profile.ProfileKey'); return false;">Del</a>
                                         </td>
                                     </tr>
                                     <tr>

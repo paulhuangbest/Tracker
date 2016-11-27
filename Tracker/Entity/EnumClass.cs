@@ -24,4 +24,17 @@ namespace Entity
         Hub = 2,
         Receive = 3
     }
+
+    public enum CostLevel
+    {
+        Normal = 1,
+        Warn = 2,
+        Block = 3
+    }
+
+    public enum ExceptionLevel
+    {
+        Warn = 1,
+        Block = 2
+    }
 }

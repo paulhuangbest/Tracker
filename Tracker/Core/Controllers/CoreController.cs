@@ -12,6 +12,8 @@ using Entity;
 using Couchbase;
 using Newtonsoft.Json;
 using Couchbase.N1QL;
+using Library.BL;
+
 
 namespace Core.Controllers
 {
@@ -79,133 +81,7 @@ namespace Core.Controllers
 
         private static readonly Cluster Cluster = new Cluster("couchbaseClients/couchbase");
 
-        public void Split()
-        {
-
-            string[] types = Enum.GetNames(typeof(LogType));
-
-            
-            foreach (string type in types)
-            {
-                Task t = Task.Factory.StartNew(() =>
-                {
-                    string queue = "", severity = "";
-
-                    switch (type)
-                    {
-                        case "ExceptionLog":
-                            queue = "q_exception";
-                            severity = "exception";
-                            break;
-
-                        case "OperateLog":
-                            queue = "q_operate";
-                            severity = "operate";
-                            break;
-
-                        case "SystemLog":
-                            queue = "q_system";
-                            severity = "system";
-                            break;
-
-                        case "Normal":
-                            queue = "q_normal";
-                            severity = "normal";
-                            break;
-                    }
-
-
-
-                    var factory = new ConnectionFactory() { HostName = "localhost" };
-                    using (var connection = factory.CreateConnection())
-                    using (var channel = connection.CreateModel())
-                    {
-                        channel.ExchangeDeclare(exchange: "direct_logs",
-                                                type: "direct");
-                        var queueName = channel.QueueDeclare(queue, true, false, false, null);
-
-
-
-                        //foreach (var severity in args)
-                        {
-                            channel.QueueBind(queue: queueName,
-                                              exchange: "direct_logs",
-                                              routingKey: severity);
-                        }
-
-
-
-                        var consumer = new EventingBasicConsumer(channel);
-
-
-                        switch (type)
-                        {
-                            case "ExceptionLog":
-                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveException);
-                                break;
-
-                            case "OperateLog":
-                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveOperate);
-                                break;
-
-                            case "SystemLog":
-                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveSystem);
-                                break;
-
-                            case "Normal":
-                                consumer.Received += new EventHandler<BasicDeliverEventArgs>(ResolveNormal);
-                                break;
-
-                            default:
-
-                                consumer.Received += (model, ea) =>
-                                {
-                                    var body = ea.Body;
-                                    var message = System.Text.Encoding.UTF8.GetString(body);
-                                    var routingKey = ea.RoutingKey;
-
-                                    using (var bucket = Cluster.OpenBucket())
-                                    {
-                                        var document = new Document<dynamic>() {
-                                            Id = "Hello",
-                                            Content = new
-                                            {
-                                                name = message
-                                            }
-                                        };
-
-                                        var upsert = bucket.Upsert(document);
-                                    }
-
-                                    
-                                };
-                                break;
-                        }
-                        
-
-                        channel.BasicConsume(queue: queueName,
-                                             noAck: true,
-                                             consumer: consumer);
-
-                        while (true)
-                        {
-
-
-                            Thread.Sleep(5000);
-                        }
-
-
-
-                    }
-
-                });
-
-
-            }
-            
-
-            
-        }
+        
 
         private void ResolveNormal(object send, BasicDeliverEventArgs ea)
         { }
@@ -242,6 +118,7 @@ namespace Core.Controllers
 
                 }
                 
+
                 using (var bucket = Cluster.OpenBucket("default"))
                 {
                     string key = "wms_operate_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
@@ -265,7 +142,8 @@ namespace Core.Controllers
                             Stack = stack,
                             Extend = extend,
                             RequestIP = dic["ip"],
-                            ServerIP = dic["sip"]
+                            ServerIP = dic["sip"],
+                            Tag = dic["user"] + "," +dic["action"]
                         }
                     };
 
@@ -282,7 +160,7 @@ namespace Core.Controllers
 
         private void ResolveSystem(object send, BasicDeliverEventArgs ea)
         {                       
-
+            
             try
             {
                 var body = ea.Body;
@@ -295,6 +173,22 @@ namespace Core.Controllers
                 DateTime begin = DateTime.ParseExact(dic["begin"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
                 DateTime end = DateTime.ParseExact(dic["end"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture);
                 TimeSpan ts = (TimeSpan)(end - begin);
+
+                double ms = ts.TotalMilliseconds;
+                
+                Enum cl = null;
+                if (ms <= 7000)
+                    cl = CostLevel.Normal;
+                else if (ms > 7000 && ms <= 12000)
+                    cl = CostLevel.Warn;
+                else
+                    cl = CostLevel.Block;
+
+                string pageName= "";
+                string p1 =dic["url"].Split('?')[0];
+                string[] p1s = p1.Split('/');
+                pageName = p1s[p1s.Length-1];
+
 
                 List<string> argument = null;
 
@@ -341,12 +235,33 @@ namespace Core.Controllers
                             Cookies = cookies,
                             StatusCode = dic["code"],
                             Method = dic["method"],
-                            ServerIP = dic["sip"]
+                            ServerIP = dic["sip"],
+                            Tag = cl.ToString() + ","+ dic["code"] + "," + pageName
                         }
                     };
 
                     var upsert = bucket.Upsert(document);
 
+                }
+
+                Dictionary<string, List<HeartData>> heartData = HttpContext.Application[dic["key"]] as Dictionary<string, List<HeartData>>;
+
+                if (heartData.Keys.Contains(ea.ConsumerTag))
+                {
+                    List<HeartData> list = heartData[ea.ConsumerTag];
+
+                    if (list.Count(p => p.Type == "2") >= 5)
+                    {
+                        HeartData data = list.First(p => p.Type == "2");
+                        list.Remove(data);
+                    }
+
+                    list.Add(new HeartData
+                    {
+                        Type = "2",
+                        Message = dic["ip"] + "|" + dic["method"] + "|" + dic["url"],
+                        Time = DateTime.Now
+                    });
                 }
             }
             catch (Exception ex)
@@ -374,6 +289,14 @@ namespace Core.Controllers
 
                 }
 
+                Enum el = null;
+                string msg = dic["msg"].ToLower();
+
+                if (msg.IndexOf("connect") >= 0 || msg.IndexOf("timeout") >= 0)
+                    el = ExceptionLevel.Block;                
+                else
+                    el = ExceptionLevel.Warn;
+
                 using (var bucket = Cluster.OpenBucket("default"))
                 {
                     string key = "wms_exception_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
@@ -394,7 +317,8 @@ namespace Core.Controllers
                             RequestIP = dic["ip"],
                             ServerIP = dic["sip"],
                             Extend = extend,
-                            User = dic["user"]
+                            User = dic["user"],
+                            Tag = el.ToString()
                         }
                     };
 
@@ -465,37 +389,21 @@ namespace Core.Controllers
 
             if (!string.IsNullOrEmpty(key))
             {
-                using (var bucket = Cluster.OpenBucket("TrackInfo"))
-                {
-                    profile = bucket.GetDocument<CoreProfile>(key).Content;
-                }
+                ProfileBL bl = new ProfileBL();
+
+                profile = bl.GetProfile(key);
             }
+
             return View("ProfileDetail",profile);
         }
 
         public  ActionResult Profiles()
         {
-            
-            using (var bucket = Cluster.OpenBucket("TrackInfo"))
-            {
-                
-                var queryRequest = new QueryRequest()
-                .Statement("select enable,exceptionConsumerNum,modifyTime,mqServer,normalConsumerNum,operateConsumerNum,profileKey,projectKey,systemConsumerNum from TrackInfo where profileKey is not null")
-                .Metrics(false);
+            ProfileBL bl = new ProfileBL();
 
+            List<CoreProfile> profiles = bl.GetProfileList();
 
-                
-                var result = bucket.Query<CoreProfile>(queryRequest);
-                
-                
-                //CoreProfile b = bucket.Get<CoreProfile>("wms_profile_20161112014426258").Value;
-                 return View("Profiles",result.Rows); 
-            }
-
-            //var result = Cluster.Query<CoreProfile>("select * from TrackInfo where profileKey is not null");
-
-                  
-            
+            return View("Profiles", profiles);
             
         }
         
@@ -504,30 +412,20 @@ namespace Core.Controllers
         {
             try 
             {
-                using (var bucket = Cluster.OpenBucket("TrackInfo"))
+                profile.ModifyTime = DateTime.Now;
+                string key = "";
+
+                if (string.IsNullOrEmpty(profile.ProfileKey))
                 {
-                    profile.ModifyTime = DateTime.Now;
-                    string key = "";
+                    key = profile.ProjectKey + "_profile_" + profile.ModifyTime.ToString("yyyyMMddHHmmssfff");
 
-                    if (string.IsNullOrEmpty(profile.ProfileKey))
-                    {
-                        key = profile.ProjectKey + "_profile_" + profile.ModifyTime.ToString("yyyyMMddHHmmssfff");
-
-                        profile.ProfileKey = key;
-                    }
-                    else
-                    {
-                        key = profile.ProfileKey;
-                    }
-
-                    var document = new Document<CoreProfile>()
-                    {
-                        Id = key,
-                        Content = profile
-                    };
-
-                    var upsert = bucket.Upsert<CoreProfile>(document);
+                    profile.ProfileKey = key;
                 }
+
+                ProfileBL bl = new ProfileBL();
+
+                bl.UpsertProfile(profile);
+                
 
                 return Json(new ResultDTO()
                 {
@@ -779,6 +677,7 @@ namespace Core.Controllers
 
                         channel.BasicConsume(queue: mqName,
                              noAck: true,
+                             consumerTag:mqName+"_"+(index+1),                             
                              consumer: consumer);
 
                         while (true)
@@ -897,56 +796,32 @@ namespace Core.Controllers
 
                 }
 
-                using (var bucket = Cluster.OpenBucket("TrackInfo"))
-                {
+                ProfileBL bl = new ProfileBL();
 
-                    var queryRequest = new QueryRequest()
-                    .Statement("select enable,exceptionConsumerNum,modifyTime,mqServer,normalConsumerNum,operateConsumerNum,profileKey,projectKey,systemConsumerNum from TrackInfo where profileKey is not null")
-                    .Metrics(false);
+                List<CoreProfile> profiles = bl.GetProfileList();
 
-
-
-                    var result = bucket.Query<CoreProfile>(queryRequest);
-
-
-                    //CoreProfile b = bucket.Get<CoreProfile>("wms_profile_20161112014426258").Value;
-                    return View("Profiles", result.Rows);
-                }
-                //return Json(new ResultDTO()
-                //{
-                //    Status = "Success",
-                //    Message = "",
-                //    Data = ""
-                //},JsonRequestBehavior.AllowGet);
-
+                return View("Profiles", profiles);
 
             }
             catch (Exception e)
             {
-                return View("Profiles");
-                //return Json(new ResultDTO()
-                //{
-                //    Status = "Fail",
-                //    Message = "",
-                //    Data = ""
-                //}, JsonRequestBehavior.AllowGet);
+                return View("Profiles");                
             }
         }
 
         // POST: Core/Delete/5
-        [HttpPost]
-        public ActionResult Delete(int id, FormCollection collection)
+        
+        public ActionResult Delete(string key)
         {
-            try
-            {
-                // TODO: Add delete logic here
 
-                return RedirectToAction("Index");
-            }
-            catch
-            {
-                return View();
-            }
+            ProfileBL bl = new ProfileBL();
+
+            bl.RemoveProfile(key);
+
+            List<CoreProfile> profiles = bl.GetProfileList();
+
+            return View("Profiles", profiles);
+
         }
 
         private void InitHeartData(string projectKey)
@@ -962,7 +837,15 @@ namespace Core.Controllers
             }
         }
 
+        public ActionResult Monitor()
+        {
+            ProfileBL bl = new ProfileBL();
 
+            List<CoreProfile> profiles = bl.GetProfileList();
+
+            return View(profiles);
+
+        }
     }
 
 

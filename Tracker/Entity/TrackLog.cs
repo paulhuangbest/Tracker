@@ -29,6 +29,8 @@ namespace Entity
 
         public string Level { get; set; }
 
+        public string Tag { get; set; }
+
         public Dictionary<string, string> Extend { get; set; }
     }
 }

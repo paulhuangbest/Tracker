@@ -130,12 +130,12 @@ namespace Receiver.Controllers
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.ExchangeDeclare(exchange: "direct_logs",
+                channel.ExchangeDeclare(exchange: "direct_"+dic["key"].ToLower(),
                                         type: "direct");
 
                 
                 var body = Encoding.UTF8.GetBytes(message);
-                channel.BasicPublish(exchange: "direct_logs",
+                channel.BasicPublish(exchange: "direct_"+dic["key"].ToLower(),
                                      routingKey: severity,
                                      basicProperties: null,
                                      body: body);
