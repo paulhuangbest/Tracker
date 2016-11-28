@@ -7,6 +7,7 @@
 
 <link href="../../Content/components-rounded.min.css" rel="stylesheet" id="style_components" type="text/css" />
 
+
 <div class="portlet box yellow">
     <div class="portlet-title">
         <div class="caption">
@@ -32,21 +33,24 @@
             </ul>
             <div class="tab-content">
                 <div class="tab-pane active" id="tab_5_1">
-                    <table>
+
+
+
+                    <table class="table table-bordered table-hover">
                         <tr>
-                            <td>ProfileKey</td>
-                            <td>ProjectKey</td>
-                            <td>Enable</td>
-                            <td>MQServer</td>
-                            <td>SystemConsumer</td>
-                            <td>OperateConsumer</td>
-                            <td>ExceptionConsumer</td>
-                            <td>NormalConsumer</td>
+                            <th>ProfileKey</th>
+                            <th>ProjectKey</th>
+                            <th>Enable</th>
+                            <th>MQServer</th>
+                            <th>SystemConsumer</th>
+                            <th>OperateConsumer</th>
+                            <th>ExceptionConsumer</th>
+                            <th>NormalConsumer</th>
 
                         </tr>
                         @foreach (CoreProfile profile in Model)
                         {
-                            <tr>
+                            <tr class="danger">
                                 <td>@profile.ProfileKey</td>
                                 <td>@profile.ProjectKey</td>
                                 <td>@profile.Enable</td>
@@ -58,56 +62,78 @@
 
                             </tr>
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     @{
                             Dictionary<string, List<HeartData>> heart = HttpContext.Current.Application[profile.ProjectKey] as Dictionary<string, List<HeartData>>;
                                     }
                                     @if (heart != null && heart.Count > 0)
                                     {
-                                        <table border="1" style="border:1px solid red">
-                                            <tr>
-                                                <th>Consumer</th>
-                                                <th>Heart</th>
-                                                <th>Data</th>
-                                            </tr>
-                                            @foreach (KeyValuePair<string, List<HeartData>> item in heart)
-                                            {
-                                                <tr>
-                                                    <td>@item.Key</td>
-                                                    <td>
-                                                        @foreach (HeartData data in item.Value)
+
+
+
+                                        <div class="portlet-body">
+                                            <div class="table-scrollable">
+                                                <table class="table table-bordered table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Consumer</th>
+                                                            <th>Heart</th>
+                                                            <th>Data</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (KeyValuePair<string, List<HeartData>> item in heart)
                                                         {
-                                                            if (data.Type == "1")
-                                                            {
-                                                                <p>Message:@data.Message</p>
-                                                                <p>Time:@data.Time.ToString()</p>
+                                                            <tr>
+                                                                <td class="active">@item.Key</td>
+                                                                <td class="success">
+                                                                    @foreach (HeartData data in item.Value)
+                                                                    {
+                                                                        if (data.Type == "1")
+                                                                        {
+                                                                            <p>Message:@data.Message</p>
+                                                                            <p>Time:@data.Time.ToString()</p>
 
-                                                            }
+                                                                        }
 
+                                                                    }
+                                                                </td>
+                                                                <td class="warning">
+                                                                    @foreach (HeartData data in item.Value)
+                                                                    {
+                                                                        if (data.Type == "2")
+                                                                        {
+                                                                            <p>Message:@data.Message</p>
+                                                                            <p>Time:@data.Time.ToString()</p>
+                                                                        }
+
+                                                                    }
+                                                                </td>
+                                                            </tr>
                                                         }
-                                                    </td>
-                                                    <td>
-                                                        @foreach (HeartData data in item.Value)
-                                                        {
-                                                            if (data.Type == "2")
-                                                            {
-                                                                <p>Message:@data.Message</p>
-                                                                <p>Time:@data.Time.ToString()</p>
-                                                            }
 
-                                                        }
-                                                    </td>
-                                                </tr>
-                                            }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
 
 
-                                        </table>
                                     }
                                 </td>
                             </tr>
                         }
-                        
+
                     </table>
+
+
+
+
+
+
+
+
+
+
 
                 </div>
                 <div class="tab-pane" id="tab_5_2">
@@ -121,7 +147,7 @@
                     </p>
                 </div>
                 <div class="tab-pane" id="tab_5_3">
-                    
+
                 </div>
             </div>
         </div>
