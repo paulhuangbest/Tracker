@@ -1,8 +1,10 @@
 ﻿using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Library.Common
@@ -10,6 +12,7 @@ namespace Library.Common
     public class MQInfo
     {
         public string HostName { get; set; }
+
         public string ExchangeName { get; set; }
 
         public string ExchangeType { get; set; }
@@ -17,6 +20,19 @@ namespace Library.Common
         public string QueueName { get; set; }
 
         public string RoutingKey { get; set; }
+
+        public string ConsumerTag { get; set; }
+
+        public EventHandler<BasicDeliverEventArgs> Handler { get; set; }
+
+        public Func<string> Notice { get; set; }
+    }
+
+    public class ConsumerTask
+    {
+        public Task Task { get; set; }
+
+        public CancellationTokenSource TokenSource { get; set; }
     }
 
     public class RabbitMQHelper
@@ -84,6 +100,44 @@ namespace Library.Common
 
                 }
             }
+        }
+
+        public static void CreateConsumer(MQInfo info)
+        {
+            var tokenSource = new CancellationTokenSource();
+            CancellationToken ct = tokenSource.Token;
+
+            Task t = Task.Run(() =>
+            {
+                var factory = new ConnectionFactory() { HostName = info.HostName };
+                using (var connection = factory.CreateConnection())
+                {
+                    using (var channel = connection.CreateModel())
+                    {
+                        var consumer = new EventingBasicConsumer(channel);
+                        consumer.Received += info.Handler;
+
+                        channel.BasicConsume(queue: info.QueueName,
+                             noAck: true,
+                             consumerTag: info.ConsumerTag,
+                             consumer: consumer);
+
+                        while (true)
+                        {
+                            if (ct.IsCancellationRequested)
+                            {
+                                break;
+                            }
+
+                            if (info.Notice != null)
+                                info.Notice();
+
+                            Thread.Sleep(5000);
+                        }
+                    }
+                }
+
+            }, ct);
         }
     }
 }
