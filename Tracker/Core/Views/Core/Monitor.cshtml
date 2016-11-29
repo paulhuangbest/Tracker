@@ -85,26 +85,27 @@
                                                         @foreach (KeyValuePair<string, List<HeartData>> item in heart)
                                                         {
                                                             <tr>
-                                                                <td class="active">@item.Key</td>
-                                                                <td class="success">
+                                                                <td class="active" style="width:20%">@item.Key</td>
+                                                                <td class="success" style="width:40%">
                                                                     @foreach (HeartData data in item.Value)
                                                                     {
                                                                         if (data.Type == "1")
                                                                         {
-                                                                            <p>Message:@data.Message</p>
-                                                                            <p>Time:@data.Time.ToString()</p>
+                                                                            <span style="margin:10px">Message:@data.Message</span>
+                                                                            <span style="margin:10px">Time:@data.Time.ToString()</span>
+                                                                            <br />
 
                                                                         }
 
                                                                     }
                                                                 </td>
-                                                                <td class="warning">
+                                                                <td class="warning" style="width:40%">
                                                                     @foreach (HeartData data in item.Value)
                                                                     {
                                                                         if (data.Type == "2")
                                                                         {
-                                                                            <p>Message:@data.Message</p>
-                                                                            <p>Time:@data.Time.ToString()</p>
+                                                                            <span>Message:@data.Message</span>
+                                                                            <span>Time:@data.Time.ToString()</span>
                                                                         }
 
                                                                     }

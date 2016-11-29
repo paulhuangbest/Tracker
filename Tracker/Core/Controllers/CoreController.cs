@@ -13,6 +13,7 @@ using Couchbase;
 using Newtonsoft.Json;
 using Couchbase.N1QL;
 using Library.BL;
+using Library.Common;
 
 
 namespace Core.Controllers
@@ -25,63 +26,63 @@ namespace Core.Controllers
             return View();
         }
 
-        
+
         public void Join()
         {
             Task.Factory.StartNew(() =>
             {
-                
-                    var factory = new ConnectionFactory() { HostName = "localhost" };
-                    using (var connection = factory.CreateConnection())
-                    using (var channel = connection.CreateModel())
+
+                var factory = new ConnectionFactory() { HostName = "localhost" };
+                using (var connection = factory.CreateConnection())
+                using (var channel = connection.CreateModel())
+                {
+                    channel.ExchangeDeclare(exchange: "direct_logs",
+                                            type: "direct");
+                    var queueName = channel.QueueDeclare("q_system", true, false, false, null);
+
+
+
+                    //foreach (var severity in args)
                     {
-                        channel.ExchangeDeclare(exchange: "direct_logs",
-                                                type: "direct");
-                        var queueName = channel.QueueDeclare("q_system", true, false, false, null);
-
-
-
-                        //foreach (var severity in args)
-                        {
-                            channel.QueueBind(queue: queueName,
-                                              exchange: "direct_logs",
-                                              routingKey: "info");
-                        }
-
-
-
-                        var consumer = new EventingBasicConsumer(channel);
-                        consumer.Received += (model, ea) =>
-                        {
-                            var body = ea.Body;
-                            var message = System.Text.Encoding.UTF8.GetString(body);
-                            var routingKey = ea.RoutingKey;
-
-                        };
-
-                        channel.BasicConsume(queue: queueName,
-                                             noAck: true,
-                                             consumer: consumer);
-
-                        while (true)
-                        {
-                            
-
-                            Thread.Sleep(5000);
-                        }
-                        
-
-
+                        channel.QueueBind(queue: queueName,
+                                          exchange: "direct_logs",
+                                          routingKey: "info");
                     }
-                    
+
+
+
+                    var consumer = new EventingBasicConsumer(channel);
+                    consumer.Received += (model, ea) =>
+                    {
+                        var body = ea.Body;
+                        var message = System.Text.Encoding.UTF8.GetString(body);
+                        var routingKey = ea.RoutingKey;
+
+                    };
+
+                    channel.BasicConsume(queue: queueName,
+                                         noAck: true,
+                                         consumer: consumer);
+
+                    while (true)
+                    {
+
+
+                        Thread.Sleep(5000);
+                    }
+
+
+
+                }
+
             });
 
-            
+
         }
 
         private static readonly Cluster Cluster = new Cluster("couchbaseClients/couchbase");
 
-        
+
 
         private void ResolveNormal(object send, BasicDeliverEventArgs ea)
         { }
@@ -106,7 +107,7 @@ namespace Core.Controllers
                     }
                     else
                         break;
-                    
+
                 }
 
                 Dictionary<string, string> extend = new Dictionary<string, string>();
@@ -117,7 +118,7 @@ namespace Core.Controllers
                         extend[key.Replace("extend_", "")] = dic[key];
 
                 }
-                
+
 
                 using (var bucket = Cluster.OpenBucket("default"))
                 {
@@ -143,7 +144,7 @@ namespace Core.Controllers
                             Extend = extend,
                             RequestIP = dic["ip"],
                             ServerIP = dic["sip"],
-                            Tag = dic["user"] + "," +dic["action"]
+                            Tag = dic["user"] + "," + dic["action"]
                         }
                     };
 
@@ -159,8 +160,8 @@ namespace Core.Controllers
 
 
         private void ResolveSystem(object send, BasicDeliverEventArgs ea)
-        {                       
-            
+        {
+
             try
             {
                 var body = ea.Body;
@@ -175,7 +176,7 @@ namespace Core.Controllers
                 TimeSpan ts = (TimeSpan)(end - begin);
 
                 double ms = ts.TotalMilliseconds;
-                
+
                 Enum cl = null;
                 if (ms <= 7000)
                     cl = CostLevel.Normal;
@@ -184,10 +185,10 @@ namespace Core.Controllers
                 else
                     cl = CostLevel.Block;
 
-                string pageName= "";
-                string p1 =dic["url"].Split('?')[0];
+                string pageName = "";
+                string p1 = dic["url"].Split('?')[0];
                 string[] p1s = p1.Split('/');
-                pageName = p1s[p1s.Length-1];
+                pageName = p1s[p1s.Length - 1];
 
 
                 List<string> argument = null;
@@ -197,7 +198,7 @@ namespace Core.Controllers
                     string post = HttpUtility.HtmlDecode(dic["post"]);
 
                     argument = post.Split('&').ToList();
-                    
+
                 }
 
                 List<string> cookies = null;
@@ -210,14 +211,9 @@ namespace Core.Controllers
 
                 }
 
-                using (var bucket = Cluster.OpenBucket("default"))
-                {
-                    string key = "wms_system_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                string key = "wms_system_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
-                    var document = new Document<SystemLog>()
-                    {
-                        Id = key,
-                        Content = new SystemLog
+                SystemLog slog = new SystemLog
                         {
                             LogId = key,
                             ProjectKey = dic["key"],
@@ -236,13 +232,14 @@ namespace Core.Controllers
                             StatusCode = dic["code"],
                             Method = dic["method"],
                             ServerIP = dic["sip"],
-                            Tag = cl.ToString() + ","+ dic["code"] + "," + pageName
-                        }
-                    };
+                            Tag = cl.ToString() + "," + dic["code"] + "," + pageName
+                        };
 
-                    var upsert = bucket.Upsert(document);
+                TrackLogBL logBL = new TrackLogBL();
 
-                }
+                logBL.UpsertSystemLog(slog);
+
+
 
                 Dictionary<string, List<HeartData>> heartData = HttpContext.Application[dic["key"]] as Dictionary<string, List<HeartData>>;
 
@@ -293,7 +290,7 @@ namespace Core.Controllers
                 string msg = dic["msg"].ToLower();
 
                 if (msg.IndexOf("connect") >= 0 || msg.IndexOf("timeout") >= 0)
-                    el = ExceptionLevel.Block;                
+                    el = ExceptionLevel.Block;
                 else
                     el = ExceptionLevel.Warn;
 
@@ -346,22 +343,22 @@ namespace Core.Controllers
                 //    });
                 //}
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
 
-            
-            
+
+
         }
-        public void remove (string queuename)
+        public void remove(string queuename)
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
-                    using (var connection = factory.CreateConnection())
-                    using (var channel = connection.CreateModel())
-                    {
-                        channel.QueueDelete("q_system", true, true);
-                    }
+            using (var connection = factory.CreateConnection())
+            using (var channel = connection.CreateModel())
+            {
+                channel.QueueDelete("q_system", true, true);
+            }
 
         }
 
@@ -394,23 +391,23 @@ namespace Core.Controllers
                 profile = bl.GetProfile(key);
             }
 
-            return View("ProfileDetail",profile);
+            return View("ProfileDetail", profile);
         }
 
-        public  ActionResult Profiles()
+        public ActionResult Profiles()
         {
             ProfileBL bl = new ProfileBL();
 
             List<CoreProfile> profiles = bl.GetProfileList();
 
             return View("Profiles", profiles);
-            
+
         }
-        
+
         [HttpPost]
         public JsonResult Upsert(CoreProfile profile)
         {
-            try 
+            try
             {
                 profile.ModifyTime = DateTime.Now;
                 string key = "";
@@ -425,7 +422,7 @@ namespace Core.Controllers
                 ProfileBL bl = new ProfileBL();
 
                 bl.UpsertProfile(profile);
-                
+
 
                 return Json(new ResultDTO()
                 {
@@ -434,7 +431,7 @@ namespace Core.Controllers
                     Data = ""
                 });
             }
-            catch(Exception e) 
+            catch (Exception e)
             {
                 return Json(new ResultDTO()
                 {
@@ -443,68 +440,112 @@ namespace Core.Controllers
                     Data = ""
                 });
             }
-            
 
-            
+
+
         }
 
         private void CreateMQ(CoreProfile profile)
         {
 
-            var factory = new ConnectionFactory() { HostName = profile.MQServer };
-            using (var connection = factory.CreateConnection())
-            {
-                using (var channel = connection.CreateModel())
-                {
-                    channel.ExchangeDeclare(exchange: "direct_" + profile.ProjectKey,
-                                            type: "direct");
-
-
-                    string[] types = Enum.GetNames(typeof(LogType));
-
-                    foreach (string type in types)
-                    {
-                        string queue = "", severity = "";
-
-                        switch (type)
-                        {
-                            case "ExceptionLog":
-                                queue = "mq_exception_" + profile.ProjectKey;
-                                severity = "exception";
-                                break;
-
-                            case "OperateLog":
-                                queue = "mq_operate_" + profile.ProjectKey;
-                                severity = "operate";
-                                break;
-
-                            case "SystemLog":
-                                queue = "mq_system_" + profile.ProjectKey;
-                                severity = "system";
-                                break;
-
-                            case "Normal":
-                                queue = "mq_normal_" + profile.ProjectKey;
-                                severity = "normal";
-                                break;
-                        }
-
-
-
-                        var queueName = channel.QueueDeclare(queue, true, false, false, null);
-
-
-                        channel.QueueBind(queue: queueName,
-                                            exchange: "direct_" + profile.ProjectKey,
-                                            routingKey: severity);
-                        
-                    }
-
-                }
-            }
-
+            string[] types = Enum.GetNames(typeof(LogType));
 
             
+            foreach (string type in types)
+            {
+                string queue = "", severity = "";
+
+                switch (type)
+                {
+                    case "ExceptionLog":
+                        queue = "mq_exception_" + profile.ProjectKey;
+                        severity = "exception";
+                        break;
+
+                    case "OperateLog":
+                        queue = "mq_operate_" + profile.ProjectKey;
+                        severity = "operate";
+                        break;
+
+                    case "SystemLog":
+                        queue = "mq_system_" + profile.ProjectKey;
+                        severity = "system";
+                        break;
+
+                    case "Normal":
+                        queue = "mq_normal_" + profile.ProjectKey;
+                        severity = "normal";
+                        break;
+                }
+
+
+                MQInfo info = new MQInfo() { 
+                    HostName = profile.MQServer,
+                    ExchangeName = "direct_" + profile.ProjectKey,
+                    ExchangeType = "direct",
+                    QueueName = queue,
+                    RoutingKey = severity
+                };
+
+
+                RabbitMQHelper.CreateMQ(info);
+
+            }
+
+            //var factory = new ConnectionFactory() { HostName = profile.MQServer };
+            //using (var connection = factory.CreateConnection())
+            //{
+            //    using (var channel = connection.CreateModel())
+            //    {
+            //        channel.ExchangeDeclare(exchange: "direct_" + profile.ProjectKey,
+            //                                type: "direct");
+
+
+            //        string[] types = Enum.GetNames(typeof(LogType));
+
+            //        foreach (string type in types)
+            //        {
+            //            string queue = "", severity = "";
+
+            //            switch (type)
+            //            {
+            //                case "ExceptionLog":
+            //                    queue = "mq_exception_" + profile.ProjectKey;
+            //                    severity = "exception";
+            //                    break;
+
+            //                case "OperateLog":
+            //                    queue = "mq_operate_" + profile.ProjectKey;
+            //                    severity = "operate";
+            //                    break;
+
+            //                case "SystemLog":
+            //                    queue = "mq_system_" + profile.ProjectKey;
+            //                    severity = "system";
+            //                    break;
+
+            //                case "Normal":
+            //                    queue = "mq_normal_" + profile.ProjectKey;
+            //                    severity = "normal";
+            //                    break;
+            //            }
+
+
+
+            //            var queueName = channel.QueueDeclare(queue, true, false, false, null);
+
+
+            //            channel.QueueBind(queue: queueName,
+            //                                exchange: "direct_" + profile.ProjectKey,
+            //                                routingKey: severity);
+
+            //        }
+
+            //    }
+            //}
+
+
+
         }
 
         public JsonResult StartConsumer(FormCollection collection)
@@ -525,34 +566,34 @@ namespace Core.Controllers
                         case "system":
                             for (int i = 0; i < profile.SystemConsumerNum; i++)
                             {
-                                CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                                CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
                             }
                             break;
 
                         case "operate":
                             for (int i = 0; i < profile.OperateConsumerNum; i++)
                             {
-                                CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
+                                CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
                             }
                             break;
 
                         case "exception":
                             for (int i = 0; i < profile.ExceptionConsumerNum; i++)
                             {
-                                CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveException));
+                                CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(ResolveException));
                             }
                             break;
 
                         case "normal":
                             for (int i = 0; i < profile.NormalConsumerNum; i++)
                             {
-                                CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
+                                CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
                             }
                             break;
                     }
                 }
-                
-                
+
+
             }
 
             return Json(new ResultDTO()
@@ -576,17 +617,17 @@ namespace Core.Controllers
 
                 StopConsumer(profile.ProjectKey, key);
             }
-            
+
 
             return Json(new ResultDTO()
             {
                 Status = "Success",
                 Message = "",
                 Data = ""
-            },JsonRequestBehavior.AllowGet);        
+            }, JsonRequestBehavior.AllowGet);
         }
 
-        private void StopConsumer(string projectKey,string mqType)
+        private void StopConsumer(string projectKey, string mqType)
         {
             if (string.IsNullOrEmpty(projectKey) && string.IsNullOrEmpty(mqType))
             {
@@ -649,18 +690,18 @@ namespace Core.Controllers
                         }
                     }
                 }
-                
+
 
             }
 
         }
 
-        private void CreateConsumer(string mqName ,string mqServer, string projectKey,int index,EventHandler<BasicDeliverEventArgs> handler)
+        private void CreateConsumer(string mqName, string mqServer, string projectKey, int index, EventHandler<BasicDeliverEventArgs> handler)
         {
 
             if (HttpContext.Application["TaskList"] == null)
                 HttpContext.Application["TaskList"] = new List<Contain>();
-            
+
 
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
@@ -677,7 +718,7 @@ namespace Core.Controllers
 
                         channel.BasicConsume(queue: mqName,
                              noAck: true,
-                             consumerTag:mqName+"_"+(index+1),                             
+                             consumerTag: mqName + "_" + (index + 1),
                              consumer: consumer);
 
                         while (true)
@@ -699,7 +740,8 @@ namespace Core.Controllers
                                     list.Remove(data);
                                 }
 
-                                list.Add(new HeartData { 
+                                list.Add(new HeartData
+                                {
                                     Type = "1",
                                     Message = "heart",
                                     Time = DateTime.Now
@@ -720,7 +762,7 @@ namespace Core.Controllers
             tasklist.Add(c);
 
             Dictionary<string, List<HeartData>> heart = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
-            
+
             heart[mqName + "_" + (index + 1)] = new List<HeartData>();
             //if (!heart.Keys.Contains(mqName))
             //    heart[mqName + "_1"] = new List<HeartData>();
@@ -733,11 +775,11 @@ namespace Core.Controllers
 
         public ActionResult InitProfile(string key)
         {
-            
+
 
             try
             {
-                
+
                 using (var bucket = Cluster.OpenBucket("TrackInfo"))
                 {
 
@@ -778,7 +820,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.SystemConsumerNum; i++)
                                 {
-                                    CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                                    CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
                                 }
 
                                 break;
@@ -805,12 +847,12 @@ namespace Core.Controllers
             }
             catch (Exception e)
             {
-                return View("Profiles");                
+                return View("Profiles");
             }
         }
 
         // POST: Core/Delete/5
-        
+
         public ActionResult Delete(string key)
         {
 

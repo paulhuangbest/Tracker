@@ -16,7 +16,7 @@ namespace Core
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Core", action = "edit", id = UrlParameter.Optional }
+                defaults: new { controller = "Core", action = "profiles", id = UrlParameter.Optional }
             );
         }
     }

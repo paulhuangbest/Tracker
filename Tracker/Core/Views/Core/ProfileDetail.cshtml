@@ -64,7 +64,7 @@
     }
 
     function Goback() {
-        location.href = "/home";
+        location.href = "/core/profiles";
     }
 
 
@@ -116,29 +116,26 @@
                     </p>
                 </div>
                 <div class="tab-pane active" id="tab_5_3">
-                    <div class="portlet box purple " style="width:400px">
+
+
+                    <div class="portlet light " style="width:500px">
                         <div class="portlet-title">
                             <div class="caption">
-                                <i class="fa fa-gift"></i> New Core Profile
+                                <i class="icon-settings font-dark"></i>
+                                <span class="caption-subject font-blue-sharp bold">@((Model != null)? "Edit":"New")</span>
                             </div>
-                            <div class="tools">
-                                <a href="" class="collapse" data-original-title="" title=""> </a>
-                                <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
-                                <a href="" class="reload" data-original-title="" title=""> </a>
-                                <a href="" class="remove" data-original-title="" title=""> </a>
-                            </div>
+
                         </div>
                         <div class="portlet-body form">
-                            <form class="form-horizontal" role="form" action="core/upsert">
+                            <form class="form-horizontal" role="form">
                                 <div class="form-body">
-                                    
                                     <div class="form-group">
                                         <label class="col-md-6 control-label">Profile Key</label>
                                         <div class="col-md-6">
                                             <input type="text" class="form-control" placeholder="Default Input" id="txtProfileKey" value="@profileKey" disabled="disabled">
                                         </div>
                                     </div>
-                                    
+
                                     <div class="form-group">
                                         <label class="col-md-6 control-label">Project Key</label>
                                         <div class="col-md-6">
@@ -152,7 +149,7 @@
                                             <div class="checkbox-list">
                                                 <label class="checkbox-inline">
                                                     <div class="checker" id="uniform-inlineCheckbox21"><span class=""><input type="checkbox" id="chkEnable" @enable></span></div>
-                                                </label>                                                
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -191,15 +188,19 @@
                                             <input type="text" class="form-control" placeholder="Default Input" id="txtNorNum" value="@normalNum">
                                         </div>
                                     </div>
-
                                 </div>
-                                <div class="form-actions right">
-                                    <button type="button" id="btnCancel" class="btn default">Cancel</button>
-                                    <button type="submit" id="btnSubmit" class="btn green">Submit</button>
+                                <div class="form-actions">
+                                    <div class="row">
+                                        <div class="col-md-offset-6 col-md-6">
+                                            <button type="submit" id="btnSubmit" class="btn green">Submit</button>
+                                            <button type="button" id="btnCancel" class="btn default">Cancel</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </form>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

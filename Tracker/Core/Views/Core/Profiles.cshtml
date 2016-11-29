@@ -82,13 +82,10 @@
     }
 
 
-    function DeleteProfile(key)
-    {
+    function DeleteProfile(key) {
         bootbox.confirm("是否要删除？",
-            function (result)
-            {
-                if (result)
-                {
+            function (result) {
+                if (result) {
                     window.location = "/core/delete?key=" + key;
                 }
             });
@@ -109,13 +106,13 @@
         <div class="tabbable-custom ">
             <ul class="nav nav-tabs ">
                 <li class="">
-                    <a href="/core/monitor" > Statistics </a>
+                    <a href="/core/monitor"> Statistics </a>
                 </li>
                 <li class="">
-                    <a href="#tab_5_2" > Rules </a>
+                    <a href="#tab_5_2"> Rules </a>
                 </li>
                 <li class="active">
-                    <a href="/core/profiles" > Profiles </a>
+                    <a href="/core/profiles"> Profiles </a>
                 </li>
             </ul>
             <div class="tab-content">
@@ -136,139 +133,129 @@
                     </p>
                 </div>
                 <div class="tab-pane active" id="tab_5_3">
-                    <div class="portlet box purple ">
-                        <div class="portlet-title">
-                            <div class="caption">
-                                <i class="fa fa-gift"></i> New Core Profile
-                            </div>
-                            <div class="tools">
-                                <a href="" class="collapse" data-original-title="" title=""> </a>
-                                <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
-                                <a href="" class="reload" data-original-title="" title=""> </a>
-                                <a href="" class="remove" data-original-title="" title=""> </a>
-                            </div>
-                        </div>
 
-                        <div class="portlet-body form">
-                            <table>
+
+
+
+                    <table class="table table-bordered table-hover">
+                        <tr>
+                            <th>ProfileKey</th>
+                            <th>ProjectKey</th>
+                            <th>Enable</th>
+                            <th>MQServer</th>
+                            <th>System</th>
+                            <th>Operate</th>
+                            <th>Exception</th>
+                            <th>Normal</th>
+                            <th>ModifyTime</th>
+                        </tr>
+                        @foreach (CoreProfile profile in Model)
+                        {
+                            <tr class="danger">
+                                <td>@profile.ProfileKey</td>
+                                <td>@profile.ProjectKey</td>
+                                <td>@profile.Enable</td>
+                                <td>@profile.MQServer</td>
+                                <td>@profile.SystemConsumerNum</td>
+                                <td>@profile.OperateConsumerNum</td>
+                                <td>@profile.ExceptionConsumerNum</td>
+                                <td>@profile.NormalConsumerNum</td>
+                                <td>@profile.ModifyTime</td>
+
+                            </tr>
+                            <tr>
+                                <td colspan="9" align="right">
+                                    <a href="/core/InitProfile?key=@profile.ProfileKey" class="btn btn-primary " role="button">Init</a>
+                                    <a href="/core/edit?key=@profile.ProfileKey" class="btn btn-primary " role="button">Edit</a>
+                                    <a href="" class="btn btn-primary " role="button" onclick="DeleteProfile('@profile.ProfileKey'); return false;">Del</a>
+                                </td>
+                            </tr>
+
+                            List<Contain> taskList = HttpContext.Current.Application["TaskList"] as List<Contain>;
+                            
+                            if (taskList != null && taskList.Count(p => p.projectKey == profile.ProjectKey) > 0)
+                            {
                                 <tr>
-                                    <td>ProfileKey</td>
-                                    <td>ProjectKey</td>
-                                    <td>Enable</td>
-                                    <td>MQServer</td>
-                                    <td>SystemConsumer</td>
-                                    <td>OperateConsumer</td>
-                                    <td>ExceptionConsumer</td>
-                                    <td>NormalConsumer</td>
-                                    <td>ModifyTime</td>
-                                    <td>Action</td>
-                                </tr>
-                                @foreach (CoreProfile profile in Model)
-                                {
-                                    <tr>
-                                        <td>@profile.ProfileKey</td>
-                                        <td>@profile.ProjectKey</td>
-                                        <td>@profile.Enable</td>
-                                        <td>@profile.MQServer</td>
-                                        <td>@profile.SystemConsumerNum</td>
-                                        <td>@profile.OperateConsumerNum</td>
-                                        <td>@profile.ExceptionConsumerNum</td>
-                                        <td>@profile.NormalConsumerNum</td>
-                                        <td>@profile.ModifyTime</td>
-                                        <td><a href="/core/InitProfile?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Init</a>                                            
-                                        </td>
-                                        <td>
-                                            <a href="/core/edit?key=@profile.ProfileKey" class="btn btn-primary btn-lg active" role="button">Edit</a>
-                                        </td>
-                                        <td>
-                                            <a href="" class="btn btn-primary btn-lg active" role="button" onclick="DeleteProfile('@profile.ProfileKey'); return false;">Del</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="10">
-                                            @{
-                                    List<Contain> taskList = HttpContext.Current.Application["TaskList"] as List<Contain>;
-                                            }
-                                            @if (taskList != null && taskList.Count(p=>p.projectKey == profile.ProjectKey) > 0)
-                                            {
-                                                <table>
-                                                    <tr>
-                                                        <td>SystemLog Consumer</td>
+                                    <td colspan="9">
+                                        <table class="table table-bordered table-hover" style="width:300px">
+                                            <tr class="success">
+                                                <td>SystemLog Consumer</td>
 
-                                                        @{
-                                                int sysNum = taskList.Where(p => p.taskKey.Contains("system")).Count();
-                                                        }
-                                                        <td>@sysNum.ToString()</td>
-                                                        @if (sysNum == profile.SystemConsumerNum)
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('system',this,'@profile.ProfileKey')">Stop</button></td>
-                                                        }
-                                                        else
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('system',this,'@profile.ProfileKey')">Start</button></td>
-                                                        }
-                                                    </tr>
-                                                    <tr>
-                                                        <td>OperateLog Consumer</td>
-                                                        @{
-                                                int opNum = taskList.Where(p => p.taskKey.Contains("operate")).Count();
-                                                        }
-                                                        <td>@opNum</td>
-                                                        @if (opNum == profile.OperateConsumerNum)
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('operate',this,'@profile.ProfileKey')">Stop</button></td>
-                                                        }
-                                                        else
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('operate',this,'@profile.ProfileKey')">Start</button></td>
-                                                        }
-                                                    </tr>
-                                                    <tr>
-                                                        <td>ExceptionLog Consumer</td>
-                                                        @{
-                                                int exNum = taskList.Where(p => p.taskKey.Contains("exception")).Count();
-                                                        }
-                                                        <td>@exNum</td>
-                                                        @if (exNum == profile.ExceptionConsumerNum)
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('exception',this,'@profile.ProfileKey')">Stop</button></td>
-                                                        }
-                                                        else
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('exception',this,'@profile.ProfileKey')">Start</button></td>
-                                                        }
-                                                    </tr>
-                                                    <tr>
-                                                        <td>NormalLog Consumer</td>
-                                                        @{
-                                                int nrNum = taskList.Where(p => p.taskKey.Contains("normal")).Count();
-                                                        }
-                                                        <td>@nrNum</td>
-                                                        @if (nrNum == profile.NormalConsumerNum)
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="stopconsumer('normal',this,'@profile.ProfileKey')">Stop</button></td>
-                                                        }
-                                                        else
-                                                        {
-                                                            <td><button type="button" class="btn btn-primary" onclick="startconsumer('normal',this,'@profile.ProfileKey')">Start</button></td>
-                                                        }
-                                                    </tr>
+                                                @{
+                                int sysNum = taskList.Where(p => p.taskKey.Contains("system")).Count();
+                                                }
+                                                <td>@sysNum.ToString()</td>
+                                                @if (sysNum == profile.SystemConsumerNum)
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="stopconsumer('system',this,'@profile.ProfileKey')">Stop</button></td>
+                                                }
+                                                else
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="startconsumer('system',this,'@profile.ProfileKey')">Start</button></td>
+                                                }
+                                            </tr>
+                                            <tr class="success">
+                                                <td>OperateLog Consumer</td>
+                                                @{
+                                int opNum = taskList.Where(p => p.taskKey.Contains("operate")).Count();
+                                                }
+                                                <td>@opNum</td>
+                                                @if (opNum == profile.OperateConsumerNum)
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="stopconsumer('operate',this,'@profile.ProfileKey')">Stop</button></td>
+                                                }
+                                                else
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="startconsumer('operate',this,'@profile.ProfileKey')">Start</button></td>
+                                                }
+                                            </tr>
+                                            <tr class="success">
+                                                <td>ExceptionLog Consumer</td>
+                                                @{
+                                int exNum = taskList.Where(p => p.taskKey.Contains("exception")).Count();
+                                                }
+                                                <td>@exNum</td>
+                                                @if (exNum == profile.ExceptionConsumerNum)
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="stopconsumer('exception',this,'@profile.ProfileKey')">Stop</button></td>
+                                                }
+                                                else
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="startconsumer('exception',this,'@profile.ProfileKey')">Start</button></td>
+                                                }
+                                            </tr>
+                                            <tr class="success">
+                                                <td>NormalLog Consumer</td>
+                                                @{
+                                int nrNum = taskList.Where(p => p.taskKey.Contains("normal")).Count();
+                                                }
+                                                <td>@nrNum</td>
+                                                @if (nrNum == profile.NormalConsumerNum)
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="stopconsumer('normal',this,'@profile.ProfileKey')">Stop</button></td>
+                                                }
+                                                else
+                                                {
+                                                    <td><button type="button" style="padding:5px" class="btn btn-primary" onclick="startconsumer('normal',this,'@profile.ProfileKey')">Start</button></td>
+                                                }
+                                            </tr>
 
 
 
-                                                </table>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                                <tr>
-                                    <td colspan="8">
-                                        <a href="/core/edit" class="btn btn-primary btn-lg active" role="button">New</a>
+                                        </table>
                                     </td>
                                 </tr>
-                            </table>
-                        </div>
-                    </div>
+                            }
+
+                        }
+                        <tr>
+                            <td colspan="10">
+                                <a href="/core/edit" class="btn btn-primary" role="button">New</a>
+                            </td>
+                        </tr>
+                    </table>
+
+
                 </div>
             </div>
         </div>
