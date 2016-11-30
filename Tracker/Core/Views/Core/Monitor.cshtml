@@ -73,7 +73,7 @@
 
                                         <div class="portlet-body">
                                             <div class="table-scrollable">
-                                                <table class="table table-bordered table-hover">
+                                                <table class="table table-bordered table-striped">
                                                     <thead>
                                                         <tr>
                                                             <th>Consumer</th>
@@ -85,31 +85,62 @@
                                                         @foreach (KeyValuePair<string, List<HeartData>> item in heart)
                                                         {
                                                             <tr>
-                                                                <td class="active" style="width:20%">@item.Key</td>
-                                                                <td class="success" style="width:40%">
+                                                                <td  style="width:20%">@item.Key</td>
+                                                                <td  style="width:30%">
                                                                     @foreach (HeartData data in item.Value)
                                                                     {
                                                                         if (data.Type == "1")
                                                                         {
-                                                                            <span style="margin:10px">Message:@data.Message</span>
-                                                                            <span style="margin:10px">Time:@data.Time.ToString()</span>
+                                                                            <span style="margin:10px">@data.Message</span>
+                                                                            <span style="margin:10px">@data.Time</span>
                                                                             <br />
 
                                                                         }
 
                                                                     }
                                                                 </td>
-                                                                <td class="warning" style="width:40%">
+                                                                <td  style="width:50%">
                                                                     @foreach (HeartData data in item.Value)
                                                                     {
                                                                         if (data.Type == "2")
                                                                         {
-                                                                            <span>Message:@data.Message</span>
-                                                                            <span>Time:@data.Time.ToString()</span>
+                                                                            string[] items = data.Message.Split('|');
+                                                                            string type = "active";
+                                                                            if (items[3] == LogType.ExceptionLog.ToString())
+                                                                            {
+                                                                                type = "danger";
+                                                                            }
+                                                                            else if (items[3] == LogType.SystemLog.ToString())
+                                                                            {
+                                                                                type = "warning";
+                                                                            }
+                                                                            else if (items[3] == LogType.OperateLog.ToString())
+                                                                            {
+                                                                                type = "success";
+                                                                            }
+                                                                            
+                                                                            <table class="table table-bordered table-hover">
+                                                                                <tr class="@type">
+                                                                                    <td colspan="2">@data.Time</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        @items[0]
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @items[2]
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td colspan="2">@items[1]</td>
+                                                                                </tr>
+                                                                            </table>
+                                                                            
                                                                         }
 
                                                                     }
                                                                 </td>
+
                                                             </tr>
                                                         }
 

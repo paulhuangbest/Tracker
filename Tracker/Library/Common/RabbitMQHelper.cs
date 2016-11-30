@@ -21,12 +21,25 @@ namespace Library.Common
 
         public string RoutingKey { get; set; }
 
+        
+    }
+
+
+    public class ConsumerInfo
+    {
+        public string HostName { get; set; }
+
+        public string QueueName { get; set; }
+
         public string ConsumerTag { get; set; }
+
+        public Dictionary<string, string> Args { get; set; }
 
         public EventHandler<BasicDeliverEventArgs> Handler { get; set; }
 
-        public Func<string> Notice { get; set; }
+        public Func<Dictionary<string,string>, string> Notice { get; set; }
     }
+
 
     public class ConsumerTask
     {
@@ -102,7 +115,7 @@ namespace Library.Common
             }
         }
 
-        public static void CreateConsumer(MQInfo info)
+        public static ConsumerTask CreateConsumer(ConsumerInfo info)
         {
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
@@ -130,7 +143,7 @@ namespace Library.Common
                             }
 
                             if (info.Notice != null)
-                                info.Notice();
+                                info.Notice(info.Args);
 
                             Thread.Sleep(5000);
                         }
@@ -138,6 +151,11 @@ namespace Library.Common
                 }
 
             }, ct);
+
+            return new ConsumerTask() { 
+                Task = t,
+                TokenSource = tokenSource
+            };
         }
     }
 }

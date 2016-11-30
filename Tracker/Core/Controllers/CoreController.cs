@@ -257,7 +257,7 @@ namespace Core.Controllers
                     {
                         Type = "2",
                         Message = dic["ip"] + "|" + dic["method"] + "|" + dic["url"],
-                        Time = DateTime.Now
+                        Time = DateTime.Now.ToString()
                     });
                 }
             }
@@ -491,61 +491,7 @@ namespace Core.Controllers
                 RabbitMQHelper.CreateMQ(info);
 
             }
-
-            //var factory = new ConnectionFactory() { HostName = profile.MQServer };
-            //using (var connection = factory.CreateConnection())
-            //{
-            //    using (var channel = connection.CreateModel())
-            //    {
-            //        channel.ExchangeDeclare(exchange: "direct_" + profile.ProjectKey,
-            //                                type: "direct");
-
-
-            //        string[] types = Enum.GetNames(typeof(LogType));
-
-            //        foreach (string type in types)
-            //        {
-            //            string queue = "", severity = "";
-
-            //            switch (type)
-            //            {
-            //                case "ExceptionLog":
-            //                    queue = "mq_exception_" + profile.ProjectKey;
-            //                    severity = "exception";
-            //                    break;
-
-            //                case "OperateLog":
-            //                    queue = "mq_operate_" + profile.ProjectKey;
-            //                    severity = "operate";
-            //                    break;
-
-            //                case "SystemLog":
-            //                    queue = "mq_system_" + profile.ProjectKey;
-            //                    severity = "system";
-            //                    break;
-
-            //                case "Normal":
-            //                    queue = "mq_normal_" + profile.ProjectKey;
-            //                    severity = "normal";
-            //                    break;
-            //            }
-
-
-
-            //            var queueName = channel.QueueDeclare(queue, true, false, false, null);
-
-
-            //            channel.QueueBind(queue: queueName,
-            //                                exchange: "direct_" + profile.ProjectKey,
-            //                                routingKey: severity);
-
-            //        }
-
-            //    }
-            //}
-
-
-
+            
         }
 
         public JsonResult StartConsumer(FormCollection collection)
@@ -696,67 +642,83 @@ namespace Core.Controllers
 
         }
 
+        private string SendHeartData(Dictionary<string,string> args)
+        {
+            Dictionary<string, List<HeartData>> heartData = HttpContext.Application[args["projectKey"]] as Dictionary<string, List<HeartData>>;
+
+            if (args["type"] == "1")
+            {
+
+                if (heartData.Keys.Contains(args["mqName"] + "_" + (int.Parse(args["index"]) + 1)))
+                {
+                    List<HeartData> list = heartData[args["mqName"] + "_" + (int.Parse(args["index"]) + 1)];
+
+                    if (list.Count(p => p.Type == "1") >= 5)
+                    {
+                        HeartData data = list.First(p => p.Type == "1");
+                        list.Remove(data);
+                    }
+
+                    list.Add(new HeartData
+                    {
+                        Type = "1",
+                        Message = "heart",
+                        Time = DateTime.Now.ToString()
+                    });
+                }
+            }
+            else if (args["type"] == "2")
+            {                
+
+                if (heartData.Keys.Contains(args["ConsumerTag"]))
+                {
+                    List<HeartData> list = heartData[args["ConsumerTag"]];
+
+                    if (list.Count(p => p.Type == "2") >= 5)
+                    {
+                        HeartData data = list.First(p => p.Type == "2");
+                        list.Remove(data);
+                    }
+
+                    list.Add(new HeartData
+                    {
+                        Type = "2",
+                        Message = args["ip"] + "|" + args["tag"] + "|" + args["url"] + "|" + args["logType"],
+                        Time = args["ct"]
+                    });
+                }
+            }
+
+
+
+            return "";
+        }
         private void CreateConsumer(string mqName, string mqServer, string projectKey, int index, EventHandler<BasicDeliverEventArgs> handler)
         {
-
             if (HttpContext.Application["TaskList"] == null)
                 HttpContext.Application["TaskList"] = new List<Contain>();
 
 
-            var tokenSource = new CancellationTokenSource();
-            CancellationToken ct = tokenSource.Token;
+            Dictionary<string, string> args = new Dictionary<string, string>();
+            args["projectKey"] = projectKey;
+            args["mqName"] = mqName;
+            args["index"] = index.ToString();
+            args["type"] = "1";
 
-            Task t = Task.Run(() =>
+            ConsumerInfo info = new ConsumerInfo()
             {
-                var factory = new ConnectionFactory() { HostName = mqServer };
-                using (var connection = factory.CreateConnection())
-                {
-                    using (var channel = connection.CreateModel())
-                    {
-                        var consumer = new EventingBasicConsumer(channel);
-                        consumer.Received += handler;
-
-                        channel.BasicConsume(queue: mqName,
-                             noAck: true,
-                             consumerTag: mqName + "_" + (index + 1),
-                             consumer: consumer);
-
-                        while (true)
-                        {
-                            if (ct.IsCancellationRequested)
-                            {
-                                break;
-                            }
-
-                            Dictionary<string, List<HeartData>> heartData = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
-
-                            if (heartData.Keys.Contains(mqName + "_" + (index + 1)))
-                            {
-                                List<HeartData> list = heartData[mqName + "_" + (index + 1)];
-
-                                if (list.Count(p => p.Type == "1") >= 5)
-                                {
-                                    HeartData data = list.First(p => p.Type == "1");
-                                    list.Remove(data);
-                                }
-
-                                list.Add(new HeartData
-                                {
-                                    Type = "1",
-                                    Message = "heart",
-                                    Time = DateTime.Now
-                                });
-                            }
-
-                            Thread.Sleep(5000);
-                        }
-                    }
-                }
-
-            }, ct);
+                Handler = handler,
+                HostName = mqServer,
+                QueueName = mqName,
+                ConsumerTag = mqName + "_" + (index + 1),
+                Args = args,
+                Notice = new Func<Dictionary<string,string>, string>(SendHeartData)
+            };
 
 
-            Contain c = new Contain { task = t, tokenSource = tokenSource, taskKey = mqName, projectKey = projectKey };
+            ConsumerTask cTask = RabbitMQHelper.CreateConsumer(info);
+
+            Contain c = new Contain { task = cTask.Task, tokenSource = cTask.TokenSource, taskKey = mqName, projectKey = projectKey };
 
             List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
             tasklist.Add(c);
@@ -764,6 +726,77 @@ namespace Core.Controllers
             Dictionary<string, List<HeartData>> heart = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
 
             heart[mqName + "_" + (index + 1)] = new List<HeartData>();
+
+
+
+            //if (HttpContext.Application["TaskList"] == null)
+            //    HttpContext.Application["TaskList"] = new List<Contain>();
+
+
+            //var tokenSource = new CancellationTokenSource();
+            //CancellationToken ct = tokenSource.Token;
+
+            //Task t = Task.Run(() =>
+            //{
+            //    var factory = new ConnectionFactory() { HostName = mqServer };
+            //    using (var connection = factory.CreateConnection())
+            //    {
+            //        using (var channel = connection.CreateModel())
+            //        {
+            //            var consumer = new EventingBasicConsumer(channel);
+            //            consumer.Received += handler;
+
+            //            channel.BasicConsume(queue: mqName,
+            //                 noAck: true,
+            //                 consumerTag: mqName + "_" + (index + 1),
+            //                 consumer: consumer);
+
+            //            while (true)
+            //            {
+            //                if (ct.IsCancellationRequested)
+            //                {
+            //                    break;
+            //                }
+
+            //                Dictionary<string, List<HeartData>> heartData = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
+
+            //                if (heartData.Keys.Contains(mqName + "_" + (index + 1)))
+            //                {
+            //                    List<HeartData> list = heartData[mqName + "_" + (index + 1)];
+
+            //                    if (list.Count(p => p.Type == "1") >= 5)
+            //                    {
+            //                        HeartData data = list.First(p => p.Type == "1");
+            //                        list.Remove(data);
+            //                    }
+
+            //                    list.Add(new HeartData
+            //                    {
+            //                        Type = "1",
+            //                        Message = "heart",
+            //                        Time = DateTime.Now
+            //                    });
+            //                }
+
+            //                Thread.Sleep(5000);
+            //            }
+            //        }
+            //    }
+
+            //}, ct);
+
+
+            //Contain c = new Contain { task = t, tokenSource = tokenSource, taskKey = mqName, projectKey = projectKey };
+
+            //List<Contain> tasklist = HttpContext.Application["TaskList"] as List<Contain>;
+            //tasklist.Add(c);
+
+            //Dictionary<string, List<HeartData>> heart = HttpContext.Application[projectKey] as Dictionary<string, List<HeartData>>;
+
+            //heart[mqName + "_" + (index + 1)] = new List<HeartData>();
+
+
+
             //if (!heart.Keys.Contains(mqName))
             //    heart[mqName + "_1"] = new List<HeartData>();
             //else
@@ -801,7 +834,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.ExceptionConsumerNum; i++)
                                 {
-                                    //CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveException));
+                                    CreateConsumer("mq_exception_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(new TrackLogBL(SendHeartData).ResolveException));
                                 }
 
                                 break;
@@ -810,7 +843,7 @@ namespace Core.Controllers
 
                                 for (int i = 0; i < profile.OperateConsumerNum; i++)
                                 {
-                                    //CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(ResolveOperate));
+                                    CreateConsumer("mq_operate_" + profile.ProjectKey, profile.MQServer,profile.ProjectKey,i, new EventHandler<BasicDeliverEventArgs>(new TrackLogBL(SendHeartData).ResolveOperate));
 
                                 }
 
@@ -819,8 +852,8 @@ namespace Core.Controllers
                             case "SystemLog":
 
                                 for (int i = 0; i < profile.SystemConsumerNum; i++)
-                                {
-                                    CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(ResolveSystem));
+                                {                                    
+                                    CreateConsumer("mq_system_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(new TrackLogBL(SendHeartData).ResolveSystem));
                                 }
 
                                 break;
