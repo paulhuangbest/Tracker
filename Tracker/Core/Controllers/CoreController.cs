@@ -77,6 +77,7 @@ namespace Core.Controllers
 
         public ActionResult Profiles()
         {
+
             ProfileBL bl = new ProfileBL();
 
             List<CoreProfile> profiles = bl.GetProfileList();
