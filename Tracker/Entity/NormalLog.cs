@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Entity
 {
-    class NormalLog
+    public class NormalLog : TrackLog
     {
+        public string Content { get; set; }
     }
 }
