@@ -215,7 +215,7 @@ namespace Core.Controllers
                     case "normal":
                         for (int i = 0; i < profile.NormalConsumerNum; i++)
                         {
-                            //CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(ResolveNormal));
+                            CreateConsumer("mq_normal_" + profile.ProjectKey, profile.MQServer, profile.ProjectKey, i, new EventHandler<BasicDeliverEventArgs>(new TrackLogBL(SendHeartData).ResolveNormal));
                         }
                         break;
                 }

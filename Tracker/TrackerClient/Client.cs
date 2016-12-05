@@ -201,14 +201,12 @@ namespace TrackerClient
         public static void NormalLog(Dictionary<string,string> dic)
         {
             Task.Factory.StartNew(() =>
-            {
+            {                
                 dic["key"] = ProjectKey;
                 dic["subkey"] = SubKey;
                 dic["type"] = LogType.Normal.ToString("D");
                 dic["ct"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff");
                 dic["status"] = LogStatus.Send.ToString("D");
-
-
 
                 Post(dic);
             });

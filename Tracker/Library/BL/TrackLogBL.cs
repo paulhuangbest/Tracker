@@ -61,6 +61,18 @@ namespace Library.BL
             return helper.Upsert<ExceptionLog>(doc);
         }
 
+        public bool UpsertNormalLog(NormalLog log)
+        {
+            var doc = new Document<NormalLog>()
+            {
+                Id = log.LogId,
+                Content = log
+            };
+
+
+            return helper.Upsert<NormalLog>(doc);
+        }
+
         public Func<Dictionary<string, string>, string> Notice { get; set; }
 
         public void ResolveSystem(object send, BasicDeliverEventArgs ea)
@@ -324,6 +336,71 @@ namespace Library.BL
 
 
 
+        }
+
+        public void ResolveNormal(object send, BasicDeliverEventArgs ea)
+        {
+            try
+            {
+                var body = ea.Body;
+                var message = System.Text.Encoding.UTF8.GetString(body);
+                var routingKey = ea.RoutingKey;
+
+                Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(message);
+
+                Dictionary<string, string> content = new Dictionary<string, string>();
+
+                foreach(KeyValuePair<string,string> item in dic)
+                {
+                    if (item.Key != "key" &&
+                        item.Key != "subkey" &&
+                        item.Key != "type" &&
+                        item.Key != "status" &&
+                        item.Key != "ct")
+                    {
+                        content[item.Key] = item.Value;
+                    }
+                }
+
+                string logId = "wms_normal_" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+
+                NormalLog nlog = new NormalLog
+                {
+                    LogId = logId,
+                    ProjectKey = dic["key"],
+                    SubKey = dic["subkey"],
+                    Type = dic["type"],
+                    Status = dic["status"],
+                    CreateTime = DateTime.ParseExact(dic["ct"], "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.CurrentCulture),
+                    Url = dic.Keys.Contains("url") ?dic["url"] :"",
+                    RequestIP = dic.Keys.Contains("ip") ? dic["ip"] : "",
+                    ServerIP = dic["sip"],
+                    Content = content,
+
+                    Tag = dic["subkey"]
+                };
+
+                var upsert = UpsertNormalLog(nlog);
+
+
+                if (Notice != null)
+                {
+                    Dictionary<string, string> args = new Dictionary<string, string>();
+                    args["ip"] = nlog.RequestIP;
+                    args["tag"] = nlog.Tag;
+                    args["url"] = nlog.Url;
+                    args["ConsumerTag"] = ea.ConsumerTag;
+                    args["type"] = "2";
+                    args["projectKey"] = nlog.ProjectKey;
+                    args["logType"] = LogType.Normal.ToString();
+                    args["ct"] = dic["ct"];
+
+                    Notice(args);
+                }
+            }
+            catch (Exception ex)
+            { 
+            }
         }
     }
 }

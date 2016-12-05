@@ -8,6 +8,6 @@ namespace Entity
 {
     public class NormalLog : TrackLog
     {
-        public string Content { get; set; }
+        public Dictionary<string,string> Content { get; set; }
     }
 }
