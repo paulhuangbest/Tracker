@@ -98,7 +98,7 @@ namespace Receiver.Controllers
 
             url.ProjectKey = dic["key"];
             url.Status = dic["status"];
-            url.Url = dic["url"];
+            url.Url = dic.Keys.Contains("url") ? dic["url"] : "";
             
 
             string message = JsonConvert.SerializeObject(dic);

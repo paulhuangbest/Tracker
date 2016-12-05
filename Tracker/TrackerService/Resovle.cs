@@ -112,6 +112,12 @@ namespace TrackerService
                             dic["logMessage"] = message;
                             dic["logType"] = ConfigurationManager.AppSettings["LogType"];
 
+                            TrackerClient.Client.ProjectKey = "wms";
+                            TrackerClient.Client.SubKey = "IIS";
+                            TrackerClient.Client.NormalLog(dic);
+
+                            
+
                             break;
                         }
                     }
