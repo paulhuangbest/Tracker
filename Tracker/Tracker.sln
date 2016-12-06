@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library", "Library\Library.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackerService", "TrackerService\TrackerService.csproj", "{A1924F2B-A3C3-451C-BC29-67091AC159B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Watcher", "Watcher\Watcher.csproj", "{C22B1D41-7F35-438B-9077-73E9B52626DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{A1924F2B-A3C3-451C-BC29-67091AC159B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1924F2B-A3C3-451C-BC29-67091AC159B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1924F2B-A3C3-451C-BC29-67091AC159B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C22B1D41-7F35-438B-9077-73E9B52626DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C22B1D41-7F35-438B-9077-73E9B52626DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C22B1D41-7F35-438B-9077-73E9B52626DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C22B1D41-7F35-438B-9077-73E9B52626DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
