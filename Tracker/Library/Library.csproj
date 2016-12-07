@@ -62,6 +62,7 @@
     <Compile Include="Common\CouchbaseHelper.cs" />
     <Compile Include="Common\RabbitMQHelper.cs" />
     <Compile Include="DAL\ProfileDAL.cs" />
+    <Compile Include="Interface\IWatcherDAL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
