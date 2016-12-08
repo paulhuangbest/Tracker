@@ -28,5 +28,13 @@ namespace Library.Interface
 
         List<NormalLog> SearchNormalLog(Dictionary<string, string> condition);
 
+        SystemLog GetSystemLog(string logId);
+
+        OperateLog GetOperateLog(string logId);
+
+        ExceptionLog GetExceptionLog(string logId);
+
+        NormalLog GetNormalLog(string logId);
+
     }
 }
