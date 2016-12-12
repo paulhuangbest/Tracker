@@ -18,7 +18,7 @@ namespace Library.Interface
 
         DataTable GetOperateTotalByDate(DateTime currentDate);
 
-        DataTable GetNormalTotalByDate(DateTime currentDate);
+        List<TotalDTO> GetNormalTotalByDate(DateTime currentDate);
 
         List<SystemLog> SearchSystemLog(Dictionary<string, string> condition);
 

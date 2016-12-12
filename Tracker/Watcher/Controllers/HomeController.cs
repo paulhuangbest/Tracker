@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Entity;
+using Library.BL;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -31,6 +33,15 @@ namespace Watcher.Controllers
         public ActionResult Login()
         {
             return View();
+        }
+
+        public ActionResult Report()
+        {
+            WatcherBL bl = new WatcherBL();
+
+            List<TotalDTO> series = bl.GetNormalTotalByDay(DateTime.Now);
+
+            return View(series);
         }
 
     }

@@ -1,0 +1,53 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using Entity
+@model List<TotalDTO>
+
+<script type="text/javascript" src="~/Scripts/jquery.flot.js"></script>
+
+<script type="text/javascript">
+
+    $(function () {
+
+        var d1 = [];
+        for (var i = 0; i < 14; i += 0.5) {
+            d1.push([i, Math.sin(i)]);
+        }
+
+        var d2 = [[0, 3], [4, 8], [8, 5], [9, 13]];
+
+        // A null signifies separate line segments
+
+        var d3 = [[0, 12], [7, 12], null, [7, 2.5], [12, 2.5]];
+
+        //$.plot("#placeholder", [d1, d2, d3]);
+
+        // Add the Flot version string to the footer
+
+        @{string points = "";
+            foreach (TotalDTO dto in Model)
+            {
+                points += string.Format("[{0},{1}],", dto.Day, dto.Total);
+                   
+            }
+            points = points.Trim(',');
+            }
+            
+                 
+         
+
+        var vData = [[@points]];
+        $.plot("#placeholder", vData);
+        //$.plot($("#placeholder"), [{ label: "", data: vData }],
+        {
+            //series: { lines: { show: true }, points: { show: true } },
+            //xaxis: { ticks: [[1, "1月"], [3, "3月"], [5, "5月"], [7, "7月"], [9, "9月"], [11, "11月"]], min: 1, max: 12 },  //指定固定的显示内容
+            //yaxis: { ticks: 5, min: 0 }  //在y轴方向显示5个刻度，此时显示内容由 flot 根据所给的数据自动判断
+        }
+            );
+    });
+
+</script>
+
+<div id="placeholder" style="width:400px;height:200px;"></div>

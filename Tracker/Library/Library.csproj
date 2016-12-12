@@ -59,9 +59,12 @@
   <ItemGroup>
     <Compile Include="BL\ProfileBL.cs" />
     <Compile Include="BL\TrackLogBL.cs" />
+    <Compile Include="BL\WatcherBL.cs" />
     <Compile Include="Common\CouchbaseHelper.cs" />
     <Compile Include="Common\RabbitMQHelper.cs" />
+    <Compile Include="Common\WatcherFactory.cs" />
     <Compile Include="DAL\ProfileDAL.cs" />
+    <Compile Include="DAL\WatcherDAL.cs" />
     <Compile Include="Interface\IWatcherDAL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
