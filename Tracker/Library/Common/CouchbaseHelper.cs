@@ -1,5 +1,6 @@
 ﻿using Couchbase;
 using Couchbase.N1QL;
+using Couchbase.Search;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -89,5 +90,7 @@ namespace Library.Common
 
             }
         }
+
+        
     }
 }

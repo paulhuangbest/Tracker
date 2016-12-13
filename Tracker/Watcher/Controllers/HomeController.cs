@@ -39,9 +39,31 @@ namespace Watcher.Controllers
         {
             WatcherBL bl = new WatcherBL();
 
-            List<TotalDTO> series = bl.GetNormalTotalByDay(DateTime.Now);
+            List<TotalDTO> exceptionTotal = bl.GetExceptionTotalByDay(DateTime.Now);
 
-            return View(series);
+            List<TotalDTO> systemTotal = bl.GetSystemTotalByDay(DateTime.Now);
+
+            List<TotalDTO> operateTotal = bl.GetOperateTotalByDay(DateTime.Now);
+
+            List<TotalDTO> normalTotal = bl.GetNormalTotalByDay(DateTime.Now);
+
+            List<TotalDTO> typeTotal = bl.GetTypeTotal(DateTime.Now);
+
+            List<TotalDTO> typeTotalMonth = bl.GetTypeTotalMonth(DateTime.Now);
+
+            ViewBag.ExceptionTotal = exceptionTotal;
+
+            ViewBag.SystemTotal = systemTotal;
+
+            ViewBag.OperateTotal = operateTotal;
+
+            ViewBag.NormalTotal = normalTotal;
+
+            ViewBag.TypeTotal = typeTotal;
+
+            ViewBag.TypeTotalMonth = typeTotalMonth;
+
+            return View(exceptionTotal);
         }
 
     }

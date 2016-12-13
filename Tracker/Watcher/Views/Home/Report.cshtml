@@ -25,29 +25,237 @@
 
         // Add the Flot version string to the footer
 
-        @{string points = "";
-            foreach (TotalDTO dto in Model)
-            {
-                points += string.Format("[{0},{1}],", dto.Day, dto.Total);
-                   
-            }
-            points = points.Trim(',');
-            }
-            
-                 
-         
+        var options ={
+            series: { lines: { show: true }, points: { show: true } },
+            xaxis: { ticks: [[1, "1日"], [3, "3日"], [5, "4日"], [7, "7日"], [9, "9日"], [11, "11日"], [13, "13日"], [15, "15日"], [17, "17日"], [19, "19日"], [21, "21日"], [23, "23日"], [25, "25日"], [27, "27日"], [29, "29日"], [31, "31日"]], min: 1, max: 32 },  //指定固定的显示内容
+            yaxis: { ticks: 10, min: 0 },  //在y轴方向显示5个刻度，此时显示内容由 flot 根据所给的数据自动判断
+            grid: { hoverable: true }
+        };
 
-        var vData = [[@points]];
-        $.plot("#placeholder", vData);
-        //$.plot($("#placeholder"), [{ label: "", data: vData }],
-        {
-            //series: { lines: { show: true }, points: { show: true } },
-            //xaxis: { ticks: [[1, "1月"], [3, "3月"], [5, "5月"], [7, "7月"], [9, "9月"], [11, "11月"]], min: 1, max: 12 },  //指定固定的显示内容
-            //yaxis: { ticks: 5, min: 0 }  //在y轴方向显示5个刻度，此时显示内容由 flot 根据所给的数据自动判断
+        @{  //-------------------------------------------------------exception
+
+            string exceptionPoints = "";
+
+            List<TotalDTO> exceptionTotal = ViewBag.ExceptionTotal as List<TotalDTO>;
+            foreach (TotalDTO dto in exceptionTotal)
+            {
+                exceptionPoints += string.Format("[{0},{1}],", dto.Day, dto.Total);
+
+            }
+            exceptionPoints = exceptionPoints.Trim(',');
+
+            //--------------------------------------------------------system
+            
+            string systemPoints = "";
+
+            List<TotalDTO> systemTotal = ViewBag.SystemTotal as List<TotalDTO>;
+            foreach (TotalDTO dto in systemTotal)
+            {
+                systemPoints += string.Format("[{0},{1}],", dto.Day, dto.Total);
+
+            }
+            systemPoints = systemPoints.Trim(',');
+
+            //---------------------------------------------------------operate
+
+            string operatePoints = "";
+
+            List<TotalDTO> operateTotal = ViewBag.OperateTotal as List<TotalDTO>;
+            foreach (TotalDTO dto in operateTotal)
+            {
+                operatePoints += string.Format("[{0},{1}],", dto.Day, dto.Total);
+
+            }
+            operatePoints = operatePoints.Trim(',');
+
+            //----------------------------------------------------------normal
+
+            string normalPoints = "";
+
+            List<TotalDTO> normalTotal = ViewBag.NormalTotal as List<TotalDTO>;
+            foreach (TotalDTO dto in normalTotal)
+            {
+                normalPoints += string.Format("[{0},{1}],", dto.Day, dto.Total);
+
+            }
+            normalPoints = normalPoints.Trim(',');
+         }
+
+
+        //var vData = [[0, 12], [7, 12], null, [7, 2.5], [12, 2.5]];
+        var exData = [@exceptionPoints];
+        $.plot($("#exceptionPanel"), [{ label: "Exception", data: exData, color: "red", lines: {fill:true}}], options);
+
+
+        var sysData = [@systemPoints];
+        $.plot($("#systemPanel"), [{ label: "System", data: sysData, lines: { fill: true } }], options);
+
+
+        var opData = [@operatePoints];
+        $.plot($("#operatePanel"), [{ label: "Action：test", data: opData, color: "green", lines: { fill: true } }], options);
+
+        var norData = [@normalPoints];
+        $.plot($("#normalPanel"), [{ label: "IIS", data: norData, color: "#3598dc", lines: {fill:true} }], options);
+
+
+        function showTooltip(x, y, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css({
+                position: 'absolute',
+                display: 'none',
+                top: y + 10,
+                left: x + 10,
+                border: '1px solid #fdd',
+                padding: '2px',
+                'background-color': '#dfeffc',
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
         }
-            );
+
+        var previousPoint = null;
+        // 绑定提示事件  
+        $(".panel").bind("plothover", function (event, pos, item) {
+            if (item) {
+                if (previousPoint != item.dataIndex) {
+                    previousPoint = item.dataIndex;
+                    $("#tooltip").remove();
+                    var y = item.datapoint[1].toFixed(0);
+
+                    var tip = "展现量：";
+                    showTooltip(item.pageX, item.pageY, tip + y);
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;
+            }
+        });
+
     });
 
 </script>
+@{
+    List<TotalDTO> typeTotal = new List<TotalDTO>();
+    if (ViewBag.TypeTotal != null)
+    { 
+        typeTotal = ViewBag.TypeTotal as List<TotalDTO>;
+    }
 
-<div id="placeholder" style="width:400px;height:200px;"></div>
+    List<TotalDTO> typeTotalMonth = new List<TotalDTO>();
+    if (ViewBag.TypeTotalMonth != null)
+    {
+        typeTotalMonth = ViewBag.TypeTotalMonth as List<TotalDTO>;
+    }  
+}
+<div>
+    <table class="table table-bordered table-hover" style="width:700px;height:100px;margin-top:70px">
+        <thead>
+            <tr>                
+                <th> 时间 </th>
+                <th> 异常 </th>
+                <th> 操作 </th>
+                <th> 系统 </th>
+                <th> 常规 </th>
+            </tr>
+        </thead>
+        <tbody>            
+            <tr class="success">                
+                <td> @DateTime.Now.ToString("yyyy-MM-dd") </td>
+                 @if (typeTotal.Find(p => p.LogType == "1") != null) { 
+                     <td>@typeTotal.Find(p => p.LogType == "1").Total</td>
+                 }
+                 else
+                 {
+                     <td></td> 
+                 }
+
+                @if (typeTotal.Find(p => p.LogType == "2") != null)
+                {
+                    <td>@typeTotal.Find(p => p.LogType == "2").Total</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+
+                @if (typeTotal.Find(p => p.LogType == "3") != null)
+                {
+                    <td>@typeTotal.Find(p => p.LogType == "3").Total</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+
+                @if (typeTotal.Find(p => p.LogType == "4") != null)
+                {
+                    <td>@typeTotal.Find(p => p.LogType == "4").Total</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+            </tr>
+            <tr class="warning">                
+                <td> @DateTime.Now.ToString("yyyy-MM") </td>
+                @if (typeTotalMonth.Find(p => p.LogType == "1") != null)
+                {
+                    <td>@typeTotalMonth.Find(p => p.LogType == "1").Total</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+
+                @if (typeTotalMonth.Find(p => p.LogType == "2") != null)
+                {
+                    <td>@typeTotalMonth.Find(p => p.LogType == "2").Total</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+
+                @if (typeTotalMonth.Find(p => p.LogType == "3") != null)
+                {
+                    <td>@typeTotalMonth.Find(p => p.LogType == "3").Total</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+
+                @if (typeTotalMonth.Find(p => p.LogType == "4") != null)
+                {
+                    <td>@typeTotalMonth.Find(p => p.LogType == "4").Total</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+            </tr>            
+        </tbody>
+    </table>
+</div>
+
+<fieldset style="margin-top:30px">
+    <legend style="font-size:15px;font-weight:bold">异常日志(@DateTime.Now.ToString("yyyy-MM"))</legend>
+    <div id="exceptionPanel" class="panel" style="width:700px;height:300px;"></div>
+</fieldset>
+
+
+<fieldset style="margin-top:30px">
+    <legend style="font-size:15px;font-weight:bold">操作日志(@DateTime.Now.ToString("yyyy-MM"))</legend>
+    <div id="operatePanel" class="panel" style="width:700px;height:300px;"></div>
+</fieldset>
+
+<fieldset style="margin-top:30px">
+    <legend style="font-size:15px;font-weight:bold">系统日志(@DateTime.Now.ToString("yyyy-MM"))</legend>
+    <div id="systemPanel" class="panel" style="width:700px;height:300px;"></div>
+</fieldset>
+
+
+<fieldset style="margin-top:30px">
+    <legend style="font-size:15px;font-weight:bold">常规日志(@DateTime.Now.ToString("yyyy-MM"))</legend>
+    <div id="normalPanel" class="panel" style="width:700px;height:300px;"></div>
+</fieldset>
+

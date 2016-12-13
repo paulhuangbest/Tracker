@@ -10,13 +10,14 @@ namespace Library.Interface
 {
     public interface IWatcherDAL
     {
-        DataTable GetTotalWithAllType(DateTime currentDate);
+        List<TotalDTO> GetTotalWithAllType(DateTime currentDate);
 
-        DataTable GetSystemTotalByDate(DateTime currentDate);
+        List<TotalDTO> GetTotalWithAllTypeMonth(DateTime currentDate);
+        List<TotalDTO> GetSystemTotalByDate(DateTime currentDate);
 
-        DataTable GetExceptionTotalByDate(DateTime currentDate);
+        List<TotalDTO> GetExceptionTotalByDate(DateTime currentDate);
 
-        DataTable GetOperateTotalByDate(DateTime currentDate);
+        List<TotalDTO> GetOperateTotalByDate(DateTime currentDate);
 
         List<TotalDTO> GetNormalTotalByDate(DateTime currentDate);
 

@@ -11,24 +11,75 @@ namespace Library.DAL
 {
     public class WatcherDAL : IWatcherDAL
     {
-        public System.Data.DataTable GetTotalWithAllType(DateTime currentDate)
+        public List<TotalDTO> GetTotalWithAllType(DateTime currentDate)
         {
-            throw new NotImplementedException();
+            CouchbaseHelper helper = new CouchbaseHelper("default");
+
+            string n1ql = @"select type LogType, count(*) total from default 
+                            where createTime like '2016-11-08%'
+                            group by type
+                            order by type";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+
+            return result;
         }
 
-        public System.Data.DataTable GetSystemTotalByDate(DateTime currentDate)
+
+        public List<TotalDTO> GetTotalWithAllTypeMonth(DateTime currentDate)
         {
-            throw new NotImplementedException();
+            CouchbaseHelper helper = new CouchbaseHelper("default");
+
+            string n1ql = @"select type LogType, count(*) total from default 
+                            where createTime like '2016-11%'
+                            group by type
+                            order by type";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+
+            return result;
         }
 
-        public System.Data.DataTable GetExceptionTotalByDate(DateTime currentDate)
+        public List<TotalDTO> GetSystemTotalByDate(DateTime currentDate)
         {
-            throw new NotImplementedException();
+            CouchbaseHelper helper = new CouchbaseHelper("default");
+
+            string n1ql = @"select DATE_PART_STR(createTime,'day') day , count(*) total from default 
+                            where createTime like '2016-11%' and type = '3' and status like '2%'
+                            group by DATE_PART_STR(createTime,'day')
+                            order by DATE_PART_STR(createTime,'day')";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+
+            return result;
         }
 
-        public System.Data.DataTable GetOperateTotalByDate(DateTime currentDate)
+        public List<TotalDTO> GetExceptionTotalByDate(DateTime currentDate)
         {
-            throw new NotImplementedException();
+            CouchbaseHelper helper = new CouchbaseHelper("default");
+
+            string n1ql = @"select DATE_PART_STR(createTime,'day') day , count(*) total from default 
+                            where createTime like '2016-11%' and type = '1'
+                            group by DATE_PART_STR(createTime,'day')
+                            order by DATE_PART_STR(createTime,'day')";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+
+            return result;
+        }
+
+        public List<TotalDTO> GetOperateTotalByDate(DateTime currentDate)
+        {
+            CouchbaseHelper helper = new CouchbaseHelper("default");
+
+            string n1ql = @"select DATE_PART_STR(createTime,'day') day , count(*) total from default 
+                            where createTime like '2016-11%' and type = '2' and action = 'test'
+                            group by DATE_PART_STR(createTime,'day')
+                            order by DATE_PART_STR(createTime,'day')";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+
+            return result;
         }
 
         public List<TotalDTO> GetNormalTotalByDate(DateTime currentDate)
@@ -86,5 +137,7 @@ namespace Library.DAL
         {
             throw new NotImplementedException();
         }
+
+
     }
 }
