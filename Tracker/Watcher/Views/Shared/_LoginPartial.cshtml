@@ -46,7 +46,7 @@
 
 @if (Request.IsAuthenticated)
 {
-    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+    @*using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
     {
     @Html.AntiForgeryToken()
 
@@ -56,15 +56,20 @@
         </li>
         <li><a href="javascript:document.getElementById('logoutForm').submit()">注销</a></li>
     </ul>
-    }
+    }*@
 }
 else
 {
     <ul class="nav navbar-nav navbar-right">
         @*<li>@Html.ActionLink("注册", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink" })</li>*@
         @*<li>@Html.ActionLink("登录", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink" ,style="color:white" })</li>*@
-        <li style="padding-top: 15px; color: white;"><span id="time"></span></li>
+    
         
     </ul>
-    <script language="javascript"> showtime();</script>
+    
 }
+
+<ul class="nav navbar-nav navbar-right">    
+    <li style="padding-top: 15px; color: white;"><span id="time"></span></li>
+</ul>
+<script language="javascript"> showtime();</script>

@@ -1,17 +1,28 @@
 ﻿using Entity;
 using Library.BL;
+using Microsoft.Owin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Web;
 using System.Web.Mvc;
 
 namespace Watcher.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         public ActionResult Index()
         {
+            IOwinContext ctx = Request.GetOwinContext();
+            ClaimsPrincipal user = ctx.Authentication.User;
+            IEnumerable<Claim> claims = user.Claims;
+            //获取Cliams的方式
+            //1、user.FindFirst("WatcherUser").Value
+            //2、use Linq to claims
+
+
             return View();
         }
 
