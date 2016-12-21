@@ -22,8 +22,12 @@ namespace Watcher.Controllers
             //1、user.FindFirst("WatcherUser").Value
             //2、use Linq to claims
 
+            ProfileBL bl = new ProfileBL();
 
-            return View();
+            List<CoreProfile> profiles = bl.GetProfileList();
+
+
+            return View(profiles);
         }
 
         public ActionResult About()

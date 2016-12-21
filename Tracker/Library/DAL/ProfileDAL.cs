@@ -12,7 +12,7 @@ namespace Library.DAL
     {
         public List<CoreProfile> GetProfileList()
         {
-            string n1ql = "select enable,exceptionConsumerNum,modifyTime,mqServer,normalConsumerNum,operateConsumerNum,profileKey,projectKey,systemConsumerNum from TrackInfo where profileKey is not null";
+            string n1ql = "select enable,exceptionConsumerNum,modifyTime,mqServer,normalConsumerNum,operateConsumerNum,profileKey,projectKey,systemConsumerNum,description from TrackInfo where profileKey is not null";
 
             CouchbaseHelper helper = new CouchbaseHelper("TrackInfo");
 

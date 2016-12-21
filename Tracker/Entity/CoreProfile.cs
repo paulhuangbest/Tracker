@@ -27,6 +27,8 @@ namespace Entity
         public DateTime ModifyTime { get; set; }
 
         public string MQServer { get; set; }
+
+        public string Description { get; set; }
     }
 
     [Serializable]

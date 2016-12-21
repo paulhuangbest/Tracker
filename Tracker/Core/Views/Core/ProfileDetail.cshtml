@@ -13,7 +13,8 @@
     var operateNum = "";
     var exceptionNum = "";
     var normalNum = "";
-
+    var description = "";
+    
     if (Model != null)
     {
         profileKey = Model.ProfileKey;
@@ -24,6 +25,7 @@
         operateNum = Model.OperateConsumerNum.ToString();
         exceptionNum = Model.ExceptionConsumerNum.ToString();
         normalNum = Model.NormalConsumerNum.ToString();
+        description = Model.Description;
     }
 }
 <script>
@@ -39,13 +41,13 @@
         var operateNum = $("#txtOpNum").val();
         var exceptionNum = $("#txtExNum").val();
         var normalNum = $("#txtNorNum").val();
-        
+        var description = $("#txtDescription").val();
 
         $.ajax({
             url: '/core/upsert',
             type: 'post',
             dataType: 'json',
-            data: {ProfileKey:profileKey, ProjectKey: projectKey, Enable: enable,MQServer:mqServer, SystemConsumerNum: systemNum, OperateConsumerNum: operateNum, ExceptionConsumerNum: exceptionNum, NormalConsumerNum: normalNum },
+            data: {ProfileKey:profileKey, ProjectKey: projectKey, Enable: enable,MQServer:mqServer, SystemConsumerNum: systemNum, OperateConsumerNum: operateNum, ExceptionConsumerNum: exceptionNum, NormalConsumerNum: normalNum,Description:description },
             success: function (data) {
                 if (data.Status == "Success")
                     bootbox.alert('' + '成功');
@@ -140,6 +142,13 @@
                                         <label class="col-md-6 control-label">Project Key</label>
                                         <div class="col-md-6">
                                             <input type="text" class="form-control" placeholder="Default Input" id="txtProKey" value="@projectKey">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-md-6 control-label">Project Description</label>
+                                        <div class="col-md-6">                                            
+                                            <textarea class="form-control" rows="3" placeholder="Default Input" id="txtDescription" >@description</textarea>
                                         </div>
                                     </div>
 

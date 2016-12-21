@@ -1,0 +1,25 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Scripts/bootstrap-datetimepicker.min.js"></script>
+<link href="~/Content/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+<script>
+    $(function () { $("#from").datetimepicker({ format: 'yyyy-mm-dd hh:ii' }); });
+</script>
+<div style="margin-top:60px">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="col-md-2">
+                <div class="input-group input-large date-picker input-daterange" data-date="10/11/2012" data-date-format="mm/dd/yyyy">
+                    <input type="text" class="form-control" id="from" name="from">
+                    <span class="input-group-addon"> to </span>
+                    <input type="text" class="form-control" name="to">
+                </div>
+                
+            </div>
+        </div>
+        <div class="col-md-6"></div>
+        <div class="col-md-6"></div>
+    </div>
+</div>
