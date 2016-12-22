@@ -6,6 +6,7 @@ using System.Web.Mvc;
 
 namespace Watcher.Controllers
 {
+    [RoutePrefix("log")]
     public class LogController : Controller
     {
         // GET: Log
@@ -14,7 +15,7 @@ namespace Watcher.Controllers
             return View();
         }
 
-        
+        [Route("ex")]
         public ActionResult ExceptionLog()
         {
             return View();
