@@ -20,5 +20,11 @@ namespace Watcher.Controllers
         {
             return View();
         }
+
+        [Route("exlist")]
+        public ActionResult SearchExceptionLog()
+        {
+            return View();
+        }
     }
 }
