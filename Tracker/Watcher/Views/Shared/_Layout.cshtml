@@ -9,6 +9,9 @@
     @Scripts.Render("~/bundles/modernizr")
     @Scripts.Render("~/bundles/jquery")
 </head>
+@{
+    string key = ViewBag.ProjectKey as string;
+}
 <body>
     <div class="navbar navbar-inverse navbar-fixed-top" style="background-color: #1bbc9b;border:0">
         <div class="container">
@@ -22,8 +25,8 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li>@Html.ActionLink("首页", "Index", "Home", new {@style="color:white" })</li>
-                    <li>@Html.ActionLink("异常", "About", "Home", new { @style = "color:white" })</li>
+                    <li>@Html.ActionLink("首页", "report", new { controller = "home", projectkey = key }, new { @style = "color:white" })</li>
+                    <li>@Html.ActionLink("异常", "exceptionlog", new { controller = "log", projectkey = key }, new { @style = "color:white" })</li>
                     <li>@Html.ActionLink("操作", "About", "Home", new { @style = "color:white" })</li>
                     <li>@Html.ActionLink("系统", "About", "Home", new { @style = "color:white" })</li>
                     <li>@Html.ActionLink("常规", "Contact", "Home", new { @style = "color:white" })</li>

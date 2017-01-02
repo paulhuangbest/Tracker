@@ -7,6 +7,7 @@ using Library.Common;
 using Entity;
 using Couchbase;
 using Library.DAL;
+using Framework.Couchbase;
 
 
 namespace Library.BL

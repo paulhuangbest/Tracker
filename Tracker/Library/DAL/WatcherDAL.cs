@@ -5,84 +5,116 @@ using System.Text;
 using System.Threading.Tasks;
 using Library.Interface;
 using Library.Common;
+using Library.DAL.DAO;
 using Entity;
+using Framework.Couchbase;
+using Framework.SQL;
 
 namespace Library.DAL
 {
     public class WatcherDAL : IWatcherDAL
     {
-        public List<TotalDTO> GetTotalWithAllType(DateTime currentDate)
+        private int _pageSize = 2;
+
+        public List<TotalDTO> GetTotalWithAllType(DateTime currentDate,string projectKey)
         {
             CouchbaseHelper helper = new CouchbaseHelper("default");
 
             string n1ql = @"select type LogType, count(*) total from default 
-                            where createTime like '2016-11-08%'
+                            where createTime like $createTime and projectKey = $projectKey
                             group by type
                             order by type";
 
-            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+            Dictionary<string, object> args = new Dictionary<string, object>();
+
+            args["$projectKey"] = projectKey;
+            args["$createTime"] = currentDate.ToString("yyyy-MM") + "%"; 
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql,args);
 
             return result;
         }
 
 
-        public List<TotalDTO> GetTotalWithAllTypeMonth(DateTime currentDate)
+        public List<TotalDTO> GetTotalWithAllTypeMonth(DateTime currentDate,string projectKey)
         {
             CouchbaseHelper helper = new CouchbaseHelper("default");
 
             string n1ql = @"select type LogType, count(*) total from default 
-                            where createTime like '2016-11%'
+                            where createTime like $createTime and projectKey = $projectKey
                             group by type
                             order by type";
 
-            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+            Dictionary<string, object> args = new Dictionary<string, object>();
+
+            args["$projectKey"] = projectKey;
+            args["$createTime"] = currentDate.ToString("yyyy-MM") + "%"; 
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql,args);
 
             return result;
         }
 
-        public List<TotalDTO> GetSystemTotalByDate(DateTime currentDate)
+        public List<TotalDTO> GetSystemTotalByDate(DateTime currentDate,string projectKey)
         {
             CouchbaseHelper helper = new CouchbaseHelper("default");
 
             string n1ql = @"select DATE_PART_STR(createTime,'day') day , count(*) total from default 
-                            where createTime like '2016-11%' and type = '3' and status like '2%'
+                            where createTime like $createTime and type = '3' and statusCode like '2%' and projectKey =$projectKey
                             group by DATE_PART_STR(createTime,'day')
                             order by DATE_PART_STR(createTime,'day')";
 
-            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+            
+            Dictionary<string, object> args = new Dictionary<string, object>();
+
+            args["$projectKey"] = projectKey;
+            args["$createTime"] = currentDate.ToString("yyyy-MM") + "%";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql,args);
 
             return result;
         }
 
-        public List<TotalDTO> GetExceptionTotalByDate(DateTime currentDate)
+        public List<TotalDTO> GetExceptionTotalByDate(DateTime currentDate,string projectKey)
         {
             CouchbaseHelper helper = new CouchbaseHelper("default");
 
             string n1ql = @"select DATE_PART_STR(createTime,'day') day , count(*) total from default 
-                            where createTime like '2016-11%' and type = '1'
+                            where createTime like $createTime and type = '1' and projectKey =$projectKey
                             group by DATE_PART_STR(createTime,'day')
                             order by DATE_PART_STR(createTime,'day')";
 
-            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+            Dictionary<string, object> args = new Dictionary<string, object>();
+
+            args["$projectKey"] = projectKey;
+            args["$createTime"] = currentDate.ToString("yyyy-MM") + "%";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql,args);
 
             return result;
         }
 
-        public List<TotalDTO> GetOperateTotalByDate(DateTime currentDate)
+        public List<TotalDTO> GetOperateTotalByDate(DateTime currentDate,string projectKey)
         {
             CouchbaseHelper helper = new CouchbaseHelper("default");
 
             string n1ql = @"select DATE_PART_STR(createTime,'day') day , count(*) total from default 
-                            where createTime like '2016-11%' and type = '2' and action = 'test'
+                            where createTime like $createTime and type = '2' and action = 'test' and projectKey =$projectKey
                             group by DATE_PART_STR(createTime,'day')
                             order by DATE_PART_STR(createTime,'day')";
 
-            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql);
+
+            Dictionary<string, object> args = new Dictionary<string, object>();
+
+            args["$projectKey"] = projectKey;
+            args["$createTime"] = currentDate.ToString("yyyy-MM") + "%";
+
+            List<TotalDTO> result = helper.Query<TotalDTO>(n1ql,args);
 
             return result;
         }
 
-        public List<TotalDTO> GetNormalTotalByDate(DateTime currentDate)
+        public List<TotalDTO> GetNormalTotalByDate(DateTime currentDate,string projectKey)
         {
             CouchbaseHelper helper = new CouchbaseHelper("default");
 
@@ -105,7 +137,39 @@ namespace Library.DAL
 
         public List<Entity.ExceptionLog> SearchExecptionLog(Dictionary<string, string> condition)
         {
-            throw new NotImplementedException();
+            //CouchbaseHelper helper = new CouchbaseHelper("default");
+
+            //string n1ql = @"select tag,serverIP,createTime,subKey from default where subKey=$subKey and createTime > '2016-12-06T00:29:57.451' and createTime < '2016-12-06T00:30:05.229' limit 2 offset 1";
+
+            //List<ExceptionLog> result = helper.Query<ExceptionLog>(n1ql);
+
+            ExceptionLogDAO dao = new ExceptionLogDAO();
+
+            SqlFilter filter = new SqlFilter();
+
+            filter.Selects.Add("List");
+            
+            filter.Wheres.And.Add("CreateTime", condition["CreateTime"]);
+
+            filter.Wheres.And.Add("Keyword", condition["Keyword"]);
+
+            filter.Wheres.And.Add("Subkey", condition["Subkey"]);
+
+            filter.Wheres.And.Add("Level", condition["Level"]);
+
+            filter.Wheres.And.Add("ProjectKey", condition["ProjectKey"]);
+
+            filter.Wheres.And.Add("Type", "1");
+
+            filter.Orders.Add("CreateTime");
+
+            
+            filter.PageSize = _pageSize;
+            filter.Page = int.Parse(condition["Page"]);
+            
+            List<ExceptionLog> result = dao.GetItems(filter);
+
+            return result;
         }
 
         public List<Entity.OperateLog> SearchOperateLog(Dictionary<string, string> condition)
@@ -130,7 +194,11 @@ namespace Library.DAL
 
         public Entity.ExceptionLog GetExceptionLog(string logId)
         {
-            throw new NotImplementedException();
+            CouchbaseHelper helper = new CouchbaseHelper("default");
+
+            ExceptionLog log = helper.GetDocument<ExceptionLog>(logId);
+            
+            return log;
         }
 
         public Entity.NormalLog GetNormalLog(string logId)
@@ -139,5 +207,62 @@ namespace Library.DAL
         }
 
 
+        public Info SearchInfo(Dictionary<string, string> condition)
+        {
+            ExceptionLogDAO dao = new ExceptionLogDAO();
+
+            SqlFilter filter = new SqlFilter();
+
+            filter.Wheres.And.Add("CreateTime", condition["CreateTime"]);
+
+            filter.Wheres.And.Add("Keyword", condition["Keyword"]);
+
+            filter.Wheres.And.Add("Subkey", condition["Subkey"]);
+
+            filter.Wheres.And.Add("Level", condition["Level"]);
+
+            filter.Wheres.And.Add("Type", "1");
+
+            Info result = dao.GetItemsInfo(filter);
+
+            return result;
+        }
+
+
+        public List<ExceptionLog> DefaultExecptionLogList(string projectKey)
+        {
+            ExceptionLogDAO dao = new ExceptionLogDAO();
+
+            SqlFilter filter = new SqlFilter();
+
+            filter.Selects.Add("List");
+
+            filter.Limit = 20;
+            
+            filter.Wheres.And.Add("Type", "1");
+
+            filter.Wheres.And.Add("ProjectKey", projectKey);
+
+            filter.Orders.Add("CreateTime");
+
+            List<ExceptionLog> result = dao.GetItems(filter);
+
+            return result;
+        }
+
+        public List<OperateLog> DefaultOperateLogList(string projectKey)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<SystemLog> DefaultSystemLogList(string projectKey)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<NormalLog> DefaultNormalLogList(string projectKey)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

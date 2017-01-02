@@ -1,22 +1,28 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+@using Entity
+@using Newtonsoft.Json
+@model List<ExceptionLog>
+
 
 <script src="~/Scripts/bootstrap-datetimepicker.min.js"></script>
 <script src="~/Scripts/bootstrap-datetimepicker.zh-CN.js"></script>
-<link href="~/Content/bootstrap-datetimepicker.min.css" rel="stylesheet" /> 
+<link href="~/Content/bootstrap-datetimepicker.min.css" rel="stylesheet" />
 <link href="~/Content/jsgrid.css" rel="stylesheet" />
 <link href="~/Content/jsgrid-theme.css" rel="stylesheet" />
 <script src="~/Scripts/jsgrid.min.js"></script>
 <script>
+    @{string json ="";
+    if (Model != null)
+    {
+        var list = Model.Select(p=>new {LogId=p.LogId, SubKey=p.SubKey,CreateTime=p.CreateTime.ToString("yyyy-MM-dd HH:mm:ss"),Tag=p.Tag,RequestIP=p.RequestIP});
 
-    var clients = [
-        { "Name": "Otto Clay", "Age": 25, "Country": 1, "Address": "Ap #897-1459 Quam Avenue", "Married": false },
-        { "Name": "Connor Johnston", "Age": 45, "Country": 2, "Address": "Ap #370-4647 Dis Av.", "Married": true },
-        { "Name": "Lacey Hess", "Age": 29, "Country": 3, "Address": "Ap #365-8835 Integer St.", "Married": false },
-        { "Name": "Timothy Henson", "Age": 56, "Country": 1, "Address": "911-5143 Luctus Ave", "Married": true },
-        { "Name": "Ramona Benton", "Age": 32, "Country": 3, "Address": "Ap #614-689 Vehicula Street", "Married": false }
-    ];
+        json = JsonConvert.SerializeObject(list);
+    }
+    }
+    var clients = @Html.Raw(json);
+
 
     var countries = [
         { Name: "", Id: 0 },
@@ -33,16 +39,17 @@
             width: "100%",
             height: "400px",
 
-            inserting: true,
-            editing: true,
-            sorting: true,
+            inserting: false,
+            editing: false,
+            sorting: false,
             paging: true,
+            pageLoading:true,
 
             pageSize: 2,
             pageButtonCount: 2,
 
             //pagerFormat: "current page: {pageIndex} &nbsp;&nbsp; {first} {prev} {pages} {next} {last} &nbsp;&nbsp; total pages: {pageCount}",
-            pagerFormat: "{pages} &nbsp;&nbsp; total pages: {pageCount}",
+            pagerFormat: "{pages} &nbsp;&nbsp; 共 {pageCount} 页",
             pagePrevText: "<",
             pageNextText: ">",
             pageFirstText: "<<",
@@ -50,26 +57,127 @@
             pageNavigatorNextText: "&#8230;",
             pageNavigatorPrevText: "&#8230;",
 
+            rowClick: function(args) {
+
+                var logid = args.item.LogId;
+
+                $.ajax({
+                    url: '/log/exdetail',
+                    type: 'post',
+                    dataType: 'json',
+                    data: { LogId:logid },
+                    success: function (data) {
+                        if (data != null)
+                        {
+
+                            $("#txtCreateTime").val(data.CreateTime.replace("T"," "));
+                            $("#txtUrl").val(data.Url);
+                            $("#txtRequestIP").val(data.RequestIP);
+                            $("#txtServerIP").val(data.ServerIP);
+                            $("#txtProjectKey").val(data.ProjectKey);
+                            $("#txtSubKey").val(data.SubKey);
+                            $("#txtTag").val(data.Tag);
+                            $("#txtUser").val(data.User);
+                            $("#txtMessage").val(data.ExceptionMessage);
+
+                        }
+                    },
+                    error: function () {
+
+                    }
+
+                })
+            },
+
             data: clients,
 
+            controller: {
+                loadData: function(filter) {
+                    //var startIndex = (filter.pageIndex - 1) * filter.pageSize;
+                    //return {
+                    //    data: db.clients.slice(startIndex, startIndex + filter.pageSize),
+                    //    itemsCount: db.clients.length
+                    //};
+                    //var data;
+                    //$.ajax({
+                    //    url: '/log/exlist',
+                    //    type: 'post',
+                    //    dataType: 'json',
+                    //    data: { },
+                    //    success: function (data) {
+
+                    //        data = {data:[{Subkey:"WMS",CreateTime:"2016-12-27",Tag:"Tag",ServerIP:"127.0.0.1"},{Subkey:"WMS",CreateTime:"2016-12-27",Tag:"Tag",ServerIP:"127.0.0.1"}],
+                    //            itemsCount:2 };
+
+
+                    //    },
+                    //    error: function () {
+                    //        data = {data:[{Subkey:"WMS",CreateTime:"2016-12-27",Tag:"Tag",ServerIP:"127.0.0.1"},{Subkey:"WMS",CreateTime:"2016-12-27",Tag:"Tag",ServerIP:"127.0.0.1"}],
+                    //            itemsCount:2 };
+
+
+                    //    }
+
+                    //}).done(function(response){
+                    //    data = {data:[{Subkey:"WMS",CreateTime:"2016-12-27",Tag:"Tag",ServerIP:"127.0.0.1"},{Subkey:"WMS",CreateTime:"2016-12-27",Tag:"Tag",ServerIP:"127.0.0.1"}],
+                    //        itemsCount:2 };
+
+                    //});
+
+                    //return data;
+
+                    
+
+                    var data;
+                    var d = $.Deferred();
+
+                    $.ajax({
+                        url: '/log/exlist',
+                        type: 'post',
+                        dataType: 'json',
+                        data: { CreateTime:condition.CreateTime,Page:filter.pageIndex,Keyword:condition.Keyword,Level:condition.Level,Subkey:condition.Subkey,ProjectKey:condition.ProjectKey}
+
+                    }).done(function(response) {
+                        d.resolve(response);
+                    });
+
+                    return d.promise();
+                }
+            },
+
             fields: [
-                { name: "Name", type: "text", width: 150, validate: "required" },
-                { name: "Age", type: "number", width: 50 },
-                { name: "Address", type: "text", width: 200 },
-                { name: "Country", type: "select", items: countries, valueField: "Id", textField: "Name" },
-                { name: "Married", type: "checkbox", title: "Is Married", sorting: false },
-                { type: "control" }
+                { name: "LogId", type: "text", width: 150,title:"LogId",visible:false},
+                { name: "SubKey", type: "text", width: 50,title:"子项" },
+                { name: "CreateTime", type: "text", width: 200,title:"创建时间",itemTemplate:function(value,item){return item.CreateTime.replace("T"," ")} },
+                { name: "Tag", type: "text", width: 100,title:"等级" },
+                { name: "RequestIP", type: "text",width:150,title:"请求IP" }
+
+
             ]
         });
+
+        $("#btnSearch").on("click", function() {
+            var dates = $("#from").val() + "," + $("#to").val();
+            var keyword = $("#keyword").val();
+            var subkey = $("#subkey").val();
+            var level = $("#level").val();
+
+            condition.Dates = dates;
+            condition.Keyword = keyword;
+            condition.Subkey = subkey;
+            condition.Level = level;
+
+            $("#jsGrid").jsGrid("loadData", condition);
+        });
+
     });
 
-    
-    
- 
-    
-    
+
+    var condition = {ProjectKey:"@ViewBag.ProjectKey"};
+   
+
 </script>
-<div style="margin-top:60px">
+<div style="margin-top:70px;font-size:10px">
     <div class="row">
         <div class="col-md-12">
             <form>
@@ -85,25 +193,28 @@
                     </div>
                     <div class="col-md-2">
                         等级：
-                        <select class="form-control">
+                        <select class="form-control" id="level">
                             <option></option>
-                            <option>Option 2</option>
-                            <option>Option 3</option>
-                            <option>Option 4</option>
-                            <option>Option 5</option>
+                            @{
+                                string[] levellist = Enum.GetNames(typeof(ExceptionLevel));
+                                foreach (string level in levellist)
+                                {
+                                    <option>@level</option>
+                                }
+                            }
                         </select>
                     </div>
 
                     <div class="col-md-2">
-                        SubKey：
-                        <input type="text" class="form-control" placeholder="Default Input">
+                        子项：
+                        <input type="text" class="form-control" placeholder="Default Input" id="subkey">
                     </div>
                     <div class="col-md-2">
                         关键字：
-                        <input type="text" class="form-control" placeholder="Default Input">
+                        <input type="text" class="form-control" placeholder="Default Input" id="keyword">
                     </div>
                     <div class="col-md-2">
-                        <button type="submit" class="btn blue" style="margin-bottom:-50px">查询</button>
+                        <button type="button" class="btn blue" style="margin-bottom:-50px" id="btnSearch">查询</button>
                     </div>
                 </div>
             </form>
@@ -118,71 +229,69 @@
 
 
                 <div class="portlet box">
-                    
+
                     <div class="portlet-body form">
                         <!-- BEGIN FORM-->
                         <form action="#" class="form-horizontal" style="background-color:#f5f5f5">
-                            <div class="form-actions top">
-
+                            <div class="form-actions top" style="padding:10px;margin-bottom:5px">
+                                <span style="font-size:12px;font-weight:bold">异常日志</span>
                             </div>
                             <div class="form-body">
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Text</label>
-                                    <div class="col-md-4">
-                                        <input type="text" class="form-control" placeholder="Enter text">
-                                        <span class="help-block"> A block of help text. </span>
+                                    <label class="col-md-2 control-label">创建时间</label>
+                                    <div class="col-md-10">
+                                        <input type="text" class="form-control" placeholder="Create Time" id="txtCreateTime">
                                     </div>
                                 </div>
+
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Email Address</label>
-                                    <div class="col-md-4">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                                <i class="fa fa-envelope"></i>
-                                            </span>
-                                            <input type="email" class="form-control" placeholder="Email Address">
-                                        </div>
+                                    <label class="col-md-2 control-label">链接</label>
+                                    <div class="col-md-10">
+                                        <input type="email" class="form-control" placeholder="Url" id="txtUrl">
                                     </div>
                                 </div>
+
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Password</label>
+                                    <label class="col-md-2 control-label">请求IP</label>
                                     <div class="col-md-4">
-                                        <div class="input-group">
-                                            <input type="password" class="form-control" placeholder="Password">
-                                            <span class="input-group-addon">
-                                                <i class="fa fa-user"></i>
-                                            </span>
-                                        </div>
+                                        <input type="email" class="form-control" placeholder="Request IP" id="txtRequestIP">
+                                    </div>
+
+                                    <label class="col-md-2 control-label">服务器IP</label>
+                                    <div class="col-md-4">
+                                        <input type="email" class="form-control" placeholder="Server IP" id="txtServerIP">
                                     </div>
                                 </div>
+
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Left Icon</label>
+                                    <label class="col-md-2 control-label">项目</label>
                                     <div class="col-md-4">
-                                        <div class="input-icon">
-                                            <i class="fa fa-bell-o"></i>
-                                            <input type="text" class="form-control" placeholder="Left icon">
-                                        </div>
+                                        <input type="email" class="form-control" placeholder="Project Key" id="txtProjectKey">
+                                    </div>
+
+                                    <label class="col-md-2 control-label">子项目</label>
+                                    <div class="col-md-4">
+                                        <input type="email" class="form-control" placeholder="Sub Key" id="txtSubKey">
                                     </div>
                                 </div>
+
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Right Icon</label>
+                                    <label class="col-md-2 control-label">标签</label>
                                     <div class="col-md-4">
-                                        <div class="input-icon right">
-                                            <i class="fa fa-microphone"></i>
-                                            <input type="text" class="form-control" placeholder="Right icon">
-                                        </div>
+                                        <input type="email" class="form-control" placeholder="Tag" id="txtTag">
                                     </div>
+
+                                    <label class="col-md-2 control-label">用户</label>
+                                    <div class="col-md-4">
+                                        <input type="email" class="form-control" placeholder="User" id="txtUser">
+                                    </div>
+
                                 </div>
+
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Input With Spinner</label>
-                                    <div class="col-md-4">
-                                        <input type="password" class="form-control spinner" placeholder="Password">
-                                    </div>
-                                </div>
-                                <div class="form-group last">
-                                    <label class="col-md-3 control-label">Static Control</label>
-                                    <div class="col-md-4">
-                                        <p class="form-control-static"> email@example.com </p>
+                                    <label class="col-md-2 control-label">异常</label>
+                                    <div class="col-md-10">
+                                        <textarea class="form-control" rows="16" placeholder="Exception Message" id="txtMessage"></textarea>
                                     </div>
                                 </div>
                             </div>

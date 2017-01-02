@@ -164,7 +164,7 @@ namespace Core.Controllers
                 MQInfo info = new MQInfo()
                 {
                     HostName = profile.MQServer,
-                    ExchangeName = "direct_" + profile.ProjectKey,
+                    ExchangeName = "direct_" + profile.ProjectKey.ToLower(),
                     ExchangeType = "direct",
                     QueueName = queue,
                     RoutingKey = severity

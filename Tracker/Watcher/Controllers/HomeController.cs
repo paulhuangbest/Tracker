@@ -10,8 +10,9 @@ using System.Web.Mvc;
 
 namespace Watcher.Controllers
 {
+    [RoutePrefix("home")]
     [Authorize]
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         public ActionResult Index()
         {
@@ -50,21 +51,26 @@ namespace Watcher.Controllers
             return View();
         }
 
-        public ActionResult Report()
+        
+
+        [Route("report/{projectkey}")]
+        public ActionResult Report(string projectkey)
         {
+            string a = ControllerContext.RouteData.Values["projectkey"] as string;
+
             WatcherBL bl = new WatcherBL();
 
-            List<TotalDTO> exceptionTotal = bl.GetExceptionTotalByDay(DateTime.Now);
+            List<TotalDTO> exceptionTotal = bl.GetExceptionTotalByDay(DateTime.Now,projectkey);
 
-            List<TotalDTO> systemTotal = bl.GetSystemTotalByDay(DateTime.Now);
+            List<TotalDTO> systemTotal = bl.GetSystemTotalByDay(DateTime.Now,projectkey);
 
-            List<TotalDTO> operateTotal = bl.GetOperateTotalByDay(DateTime.Now);
+            List<TotalDTO> operateTotal = bl.GetOperateTotalByDay(DateTime.Now,projectkey);
 
-            List<TotalDTO> normalTotal = bl.GetNormalTotalByDay(DateTime.Now);
+            List<TotalDTO> normalTotal = bl.GetNormalTotalByDay(DateTime.Now,projectkey);
 
-            List<TotalDTO> typeTotal = bl.GetTypeTotal(DateTime.Now);
+            List<TotalDTO> typeTotal = bl.GetTypeTotal(DateTime.Now,projectkey);
 
-            List<TotalDTO> typeTotalMonth = bl.GetTypeTotalMonth(DateTime.Now);
+            List<TotalDTO> typeTotalMonth = bl.GetTypeTotalMonth(DateTime.Now,projectkey);
 
             ViewBag.ExceptionTotal = exceptionTotal;
 

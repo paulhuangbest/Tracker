@@ -88,7 +88,7 @@
 
 
         var sysData = [@systemPoints];
-        $.plot($("#systemPanel"), [{ label: "System", data: sysData, lines: { fill: true } }], options);
+        $.plot($("#systemPanel"), [{ label: "System for 200", data: sysData, lines: { fill: true } }], options);
 
 
         var opData = [@operatePoints];
@@ -120,7 +120,7 @@
                     $("#tooltip").remove();
                     var y = item.datapoint[1].toFixed(0);
 
-                    var tip = "展现量：";
+                    var tip = "Log数量：";
                     showTooltip(item.pageX, item.pageY, tip + y);
                 }
             }

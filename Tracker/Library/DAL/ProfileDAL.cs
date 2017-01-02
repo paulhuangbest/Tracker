@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Entity;
 using Library.Common;
+using Framework.Couchbase;
 
 namespace Library.DAL
 {

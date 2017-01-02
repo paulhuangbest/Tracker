@@ -1,5 +1,6 @@
 ﻿using Couchbase;
 using Entity;
+using Framework.Couchbase;
 using Library.Common;
 using Newtonsoft.Json;
 using RabbitMQ.Client.Events;

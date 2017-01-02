@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Library.Common
+namespace Framework.Couchbase
 {
     public class CouchbaseHelper
     {
@@ -75,13 +75,20 @@ namespace Library.Common
 
         public List<T> Query<T>(string n1ql)
         {
+            return  Query<T>(n1ql, null);
+        }
+
+        public List<T> Query<T>(string n1ql,Dictionary<string,object> prams)
+        {
             using (var bucket = Cluster.OpenBucket(BucketName))
             {
-                Dictionary<string, object> p = new Dictionary<string, object>();
-                
+
+                if (prams == null)
+                    prams = new Dictionary<string, object>();
+
                 var queryRequest = new QueryRequest()
                                .Statement(n1ql)
-                               .AddNamedParameter(p.ToArray())
+                               .AddNamedParameter(prams.ToArray())
                                .Metrics(false);
 
                 var result = bucket.Query<T>(queryRequest);
@@ -93,7 +100,5 @@ namespace Library.Common
 
             }
         }
-
-        
     }
 }

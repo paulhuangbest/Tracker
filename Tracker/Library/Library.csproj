@@ -60,9 +60,9 @@
     <Compile Include="BL\ProfileBL.cs" />
     <Compile Include="BL\TrackLogBL.cs" />
     <Compile Include="BL\WatcherBL.cs" />
-    <Compile Include="Common\CouchbaseHelper.cs" />
     <Compile Include="Common\RabbitMQHelper.cs" />
     <Compile Include="Common\WatcherFactory.cs" />
+    <Compile Include="DAL\DAO\ExceptionLogDAO.cs" />
     <Compile Include="DAL\ProfileDAL.cs" />
     <Compile Include="DAL\WatcherDAL.cs" />
     <Compile Include="Interface\IWatcherDAL.cs" />
@@ -73,10 +73,15 @@
       <Project>{519fd02b-738e-45fa-932d-fa3583967fb3}</Project>
       <Name>Entity</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Framework\Framework.csproj">
+      <Project>{e4987650-5c20-47ad-8da3-158082da5284}</Project>
+      <Name>Framework</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
