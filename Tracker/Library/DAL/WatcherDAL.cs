@@ -14,7 +14,7 @@ namespace Library.DAL
 {
     public class WatcherDAL : IWatcherDAL
     {
-        private int _pageSize = 2;
+        private int _pageSize = 5;
 
         public List<TotalDTO> GetTotalWithAllType(DateTime currentDate,string projectKey)
         {
@@ -28,7 +28,7 @@ namespace Library.DAL
             Dictionary<string, object> args = new Dictionary<string, object>();
 
             args["$projectKey"] = projectKey;
-            args["$createTime"] = currentDate.ToString("yyyy-MM") + "%"; 
+            args["$createTime"] = currentDate.ToString("yyyy-MM-dd") + "%"; 
 
             List<TotalDTO> result = helper.Query<TotalDTO>(n1ql,args);
 

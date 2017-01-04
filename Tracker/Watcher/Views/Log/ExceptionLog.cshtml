@@ -45,8 +45,8 @@
             paging: true,
             pageLoading:true,
 
-            pageSize: 2,
-            pageButtonCount: 2,
+            pageSize: 5,
+            pageButtonCount: 3,
 
             //pagerFormat: "current page: {pageIndex} &nbsp;&nbsp; {first} {prev} {pages} {next} {last} &nbsp;&nbsp; total pages: {pageCount}",
             pagerFormat: "{pages} &nbsp;&nbsp; 共 {pageCount} 页",
@@ -162,10 +162,11 @@
             var subkey = $("#subkey").val();
             var level = $("#level").val();
 
-            condition.Dates = dates;
+            condition.CreateTime = dates;
             condition.Keyword = keyword;
             condition.Subkey = subkey;
             condition.Level = level;
+            
 
             $("#jsGrid").jsGrid("loadData", condition);
         });
