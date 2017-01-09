@@ -48,5 +48,7 @@ namespace Library.Interface
         List<SystemLog> DefaultSystemLogList(string projectKey);
 
         List<NormalLog> DefaultNormalLogList(string projectKey);
+
+        List<TrackLog> GetTimelineData(LogType type, Dictionary<string, string> condition);
     }
 }

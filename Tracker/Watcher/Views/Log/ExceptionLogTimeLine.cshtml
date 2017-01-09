@@ -1,5 +1,199 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+@using Entity
+@model Dictionary<string,List<ExceptionLog>>
 
+<style type="text/css">
+    #timeline {
+        width: 1000px;
+        height: 440px;
+        overflow: hidden;
+        margin: 40px auto;
+        position: relative;
+        background: url('/Image/dot.gif') 250px top repeat-y;
+    }
 
+    #dates {
+        width: 270px;
+        height: 440px;
+        overflow: hidden;
+        float: left;
+    }
+
+        #dates li {
+            list-style: none;
+            width: 270px;
+            height: 100px;
+            line-height: 100px;
+            font-size: 16px;
+            padding-right: 40px;
+            text-align: right;
+            background: url('/Image/biggerdot.png') 247px center no-repeat;
+        }
+
+        #dates a {
+            line-height: 38px;
+            padding-bottom: 10px;
+        }
+
+        #dates .selected {
+            font-size: 20px;
+        }
+
+    #issues {
+        width: 700px;
+        height: 440px;
+        overflow: hidden;
+        float: right;
+    }
+
+        #issues li {
+            width: 630px;
+            height: 440px;
+            list-style: none;
+        }
+
+            #issues li h1 {
+                color: #ffcc00;
+                font-size: 42px;
+                height: 52px;
+                line-height: 52px;
+                text-shadow: #000 1px 1px 2px;
+            }
+
+            #issues li p {
+                font-size: 14px;
+                margin: 10px;
+                line-height: 26px;
+            }
+</style>
+<script src="~/Scripts/jquery.timelinr-0.9.53.js"></script>
+<script src="~/Scripts/jquery.mousewheel.js"></script>
+<script src="~/Scripts/bootstrap-datetimepicker.min.js"></script>
+<script src="~/Scripts/bootstrap-datetimepicker.zh-CN.js"></script>
+<link href="~/Content/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+
+<script type="text/javascript">
+    $(function () {
+        $("#from").datetimepicker({ format: 'yyyy-mm-dd hh:ii', autoclose: 1, language: 'zh-CN' });
+        $("#to").datetimepicker({ format: 'yyyy-mm-dd hh:ii', autoclose: 1, language: 'zh-CN' });
+
+        $().timelinr({
+            orientation: 'vertical',
+            issuesSpeed: 300,
+            datesSpeed: 100,
+            arrowKeys: 'true',
+            startAt: 1,
+            mousewheel: 'false'
+        });
+    });
+</script>
+
+@{
+    Dictionary<string, string> condition = ViewBag.Condition as Dictionary<string, string>;
+    var from = "";
+    var to = "";
+
+    if (!string.IsNullOrEmpty(condition["CreateTime"]))
+    {
+        string[] time = condition["CreateTime"].Split(',');
+        from = time[0];
+        to = time[1]; 
+    }
+}}
+<div style="margin-top:70px;font-size:10px">
+    <div class="row">
+        <div class="col-md-12">
+            <form action="/log//extl/@ViewBag.ProjectKey" method="post">
+                <div class="row">
+                    <div class="col-md-4">
+                        创建时间：
+                        <div class="input-group input-large date-picker input-daterange">
+                            <input type="text" class="form-control"  id="from" name="createTime" value="@from">
+                            <span class="input-group-addon"> 至 </span>
+                            <input type="text" class="form-control" id="to" name="createTime" value="@to">
+                        </div>
+
+                    </div>
+                    <div class="col-md-2">
+                        等级：
+                        <select class="form-control" name="level" id="level">
+                            <option></option>
+                            @{
+                                string[] levellist = Enum.GetNames(typeof(ExceptionLevel));
+                                foreach (string level in levellist)
+                                {
+                                    if (condition["Level"] == level)
+                                    {
+                                        <option selected="selected">@level</option>
+                                    }
+                                    else
+                                    {
+                                        <option>@level</option>
+                                    }
+                                }
+}
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        子项：
+                        <input type="text" class="form-control" placeholder="Default Input" value="@condition["Subkey"]" name="subkey"id="subkey">
+                    </div>
+                    <div class="col-md-2">
+                        关键字：
+                        <input type="text" class="form-control" placeholder="Default Input" value="@condition["Keyword"]" name="keyword" id="keyword">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn blue" style="margin-bottom:-50px" id="btnSearch">查询</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="main">
+            <div id="timeline">
+                <ul id="dates" style="padding:0;">
+                   @foreach (KeyValuePair<string, List<ExceptionLog>> item in Model)
+                   {
+                        <li>
+                            <a href="#@item.Key">@item.Key</a>@if(item.Value != null && item.Value.Count>0){<span style="color:red">[@item.Value.Count()]</span>}
+                            
+                        </li>
+                    }
+                                        
+                </ul>
+                <ul id="issues" style="padding:0;">
+                    @foreach (KeyValuePair<string, List<ExceptionLog>> item in Model)
+                    {
+                        <li id="@item.Key">
+                            <div style="height:400px;overflow-y:scroll">
+                                @foreach (ExceptionLog log in item.Value)
+                                {
+                                    <div class="note note-danger" id="@log.LogId" style="position:relative">
+                                        <h4 class="block">@log.Url</h4>
+                                        <p>@log.CreateTime</p>
+                                        <p>请求IP:@log.RequestIP &nbsp;&nbsp; 服务IP:@log.ServerIP &nbsp;&nbsp; 子项目:@log.SubKey &nbsp;&nbsp; 级别:@log.Tag</p>
+                                        <p>@log.ExceptionMessage</p>
+                                        <button onclick="$('#@log.LogId').css('display','none')" type="button" class="btn red btn-outline" style="position:absolute;top:10px;right:5px;padding:3px 6px;font-size:12px">关闭</button>
+                                        
+                                    </div>
+                                    
+
+                                }
+                            </div>
+
+                            
+                        </li>
+                    }
+                   
+                    
+                </ul>
+                <a href="#" id="next"></a> <!-- optional -->
+                <a href="#" id="prev"></a> <!-- optional -->
+
+            </div>
+        </div>
+    </div>
+</div>

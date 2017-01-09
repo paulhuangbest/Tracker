@@ -88,5 +88,60 @@ namespace Watcher.Controllers
             return c;
             
         }
+
+        [Route("extl/{projectKey}")]
+        public ActionResult ExceptionLogTimeLine(string projectKey)
+        {
+
+            Dictionary<string, string> condition = new Dictionary<string, string>();
+
+            condition["CreateTime"] = Request["createTime"] != null ? Request["createTime"] : "";
+            condition["Keyword"] = Request["keyword"] != null ? Request["keyword"] : "";
+            condition["Subkey"] = Request["subkey"] != null ? Request["subkey"] : "";
+            condition["Level"] = Request["level"] != null ? Request["level"] : "";
+            condition["ProjectKey"] = projectKey;
+
+            ViewBag.Condition = condition;
+
+            WatcherBL bl = new WatcherBL();
+            List<ExceptionLog> list = bl.GetExceptionLogTimeLine(condition);
+
+            Dictionary<string, List<ExceptionLog>> data = new Dictionary<string, List<ExceptionLog>>();
+
+            if (list.Count > 0)
+            {
+                DateTime min = list.First().CreateTime;
+                DateTime max = list.Last().CreateTime;
+
+                
+                DateTime begin = min;
+                DateTime end;
+
+                while (true)
+                {
+
+                    end = begin.AddDays(1);
+
+                    if (end >= max)
+                    {
+                        end = max;
+                    }
+
+                    List<ExceptionLog> group = list.Where(p => p.CreateTime < end && p.CreateTime >= begin).ToList();
+                    data[begin.ToString("yyyy-MM-dd HH:mm:ss")] = group;
+
+
+                    begin = end;
+
+                    if (end == max)
+                        break;
+                }
+
+            }
+            
+
+            return View(data);
+
+        }
     }
 }

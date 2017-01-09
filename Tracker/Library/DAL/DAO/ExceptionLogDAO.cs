@@ -16,6 +16,7 @@ namespace Library.DAL.DAO
             TableName = "default";
 
             SelectMethods.Add("List", new SelectFilterDelegate(this.Select_List));
+            SelectMethods.Add("TimeLine", new SelectFilterDelegate(this.Select_TimeLine));
 
             //================================================================================
 
@@ -32,6 +33,13 @@ namespace Library.DAL.DAO
         {
 
             SelectPart.Add("r.logId,r.requestIP,r.tag,r.createTime,r.subKey");
+            
+        }
+
+        protected void Select_TimeLine()
+        {
+
+            SelectPart.Add("r.url,r.requestIP,r.serverIP,r.createTime,r.subKey,r.exceptionMessage,r.tag,r.logId");
 
         }
 

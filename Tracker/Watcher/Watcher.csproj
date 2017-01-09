@@ -194,6 +194,8 @@
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Image\biggerdot.png" />
+    <Content Include="Image\dot.gif" />
     <Content Include="Image\index_01.jpg" />
     <Content Include="Image\watcher_index_01.jpg" />
     <Content Include="Scripts\bootstrap-datetimepicker.min.js" />
@@ -206,6 +208,8 @@
     <Content Include="Scripts\jquery-1.10.2.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
     <Content Include="Scripts\jquery.flot.js" />
+    <Content Include="Scripts\jquery.mousewheel.js" />
+    <Content Include="Scripts\jquery.timelinr-0.9.53.js" />
     <Content Include="Scripts\jquery.validate.js" />
     <Content Include="Scripts\jquery.validate.min.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
@@ -243,6 +247,7 @@
     <Content Include="Views\Home\Report.cshtml" />
     <Content Include="Views\Login\Login.cshtml" />
     <Content Include="Views\Log\ExceptionLog.cshtml" />
+    <Content Include="Views\Log\ExceptionLogTimeLine.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

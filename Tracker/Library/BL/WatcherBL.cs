@@ -72,5 +72,19 @@ namespace Library.BL
 
             return info.total;
         }
+
+        public List<ExceptionLog> GetExceptionLogTimeLine(Dictionary<string, string> condition)
+        {
+            List<TrackLog> list = IWatcher.GetTimelineData(LogType.ExceptionLog, condition);
+
+            List<ExceptionLog> result = new List<ExceptionLog>();
+
+            foreach (TrackLog log in list)
+            {
+                result.Add(log as ExceptionLog);
+            }
+
+            return result;
+        }
     }
 }
