@@ -32,6 +32,7 @@
     ];
 
     $(function () {
+        $("#aTabEx").css({"background-color":"rgb(87, 184, 111)","color":"yellow"});
         $("#from").datetimepicker({ format: 'yyyy-mm-dd hh:ii', autoclose: 1, language: 'zh-CN' });
         $("#to").datetimepicker({ format: 'yyyy-mm-dd hh:ii', autoclose: 1, language: 'zh-CN' });
 
@@ -216,6 +217,7 @@
                     </div>
                     <div class="col-md-2">
                         <button type="button" class="btn blue" style="margin-bottom:-50px" id="btnSearch">查询</button>
+                        <a href="/log/extl/@ViewBag.ProjectKey" class="btn blue" style="margin-bottom:-50px"> 时间轴 </a>
                     </div>
                 </div>
             </form>

@@ -25,12 +25,11 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li>@Html.ActionLink("首页", "report", new { controller = "home", projectkey = key }, new { @style = "color:white" })</li>
-                    <li>@Html.ActionLink("异常", "exceptionlog", new { controller = "log", projectkey = key }, new { @style = "color:white" })</li>
+                    <li>@Html.ActionLink("首页", "report", new { controller = "home", projectkey = key }, new { @style = "color:white",id="aTabIndex" })</li>
+                    <li>@Html.ActionLink("异常", "exceptionlog", new { controller = "log", projectkey = key }, new { @style = "color:white",id="aTabEx" })</li>
                     <li>@Html.ActionLink("操作", "About", "Home", new { @style = "color:white" })</li>
                     <li>@Html.ActionLink("系统", "About", "Home", new { @style = "color:white" })</li>
-                    <li>@Html.ActionLink("常规", "Contact", "Home", new { @style = "color:white" })</li>
-                    <li>@Html.ActionLink("时间轴", "exceptionlogtimeline", new { controller = "log", projectkey = key }, new { @style = "color:white" })</li>
+                    <li>@Html.ActionLink("常规", "Contact", "Home", new { @style = "color:white" })</li>                    
                 </ul>
                 @Html.Partial("_LoginPartial")
             </div>

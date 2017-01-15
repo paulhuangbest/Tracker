@@ -78,6 +78,7 @@
 
 <script type="text/javascript">
     $(function () {
+        $("#aTabEx").css({ "background-color": "rgb(87, 184, 111)", "color": "yellow" });
         $("#from").datetimepicker({ format: 'yyyy-mm-dd hh:ii', autoclose: 1, language: 'zh-CN' });
         $("#to").datetimepicker({ format: 'yyyy-mm-dd hh:ii', autoclose: 1, language: 'zh-CN' });
 
@@ -103,7 +104,7 @@
         from = time[0];
         to = time[1]; 
     }
-}}
+}
 <div style="margin-top:70px;font-size:10px">
     <div class="row">
         <div class="col-md-12">
@@ -149,6 +150,7 @@
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn blue" style="margin-bottom:-50px" id="btnSearch">查询</button>
+                        <a href="/log/ex/@ViewBag.ProjectKey" style="margin-bottom:-50px" class="btn blue"> 高级 </a>
                     </div>
                 </div>
             </form>
